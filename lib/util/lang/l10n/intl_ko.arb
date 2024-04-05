@@ -1,0 +1,8 @@
+{
+    "@@locale": "ko",
+    "hello": "안녕",
+    "cancel": "취소",
+    "mobile": "Mobile",
+    "tablet": "Tablet",
+    "desktop": "Desktop"
+}

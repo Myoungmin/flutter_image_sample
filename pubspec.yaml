@@ -1,0 +1,29 @@
+name: flutter_image_sample
+description: "A new Flutter project."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ">=3.2.3 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^2.4.10
+  grpc: ^3.2.4
+  intl: ^0.18.1
+  protobuf: ^3.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+flutter_intl:
+  enabled: true
+  arb_dir: lib/util/lang/l10n
+  output_dir: lib/util/lang/generated
