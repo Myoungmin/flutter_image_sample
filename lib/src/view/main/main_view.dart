@@ -19,13 +19,27 @@ class MainView extends StatelessWidget {
             ),
           ),
         ),
-        body: Center(
-          child: Text(
-            "Empty",
-            style: ref.textTheme.displayLarge?.copyWith(
-              color: ref.colorScheme.onSurface,
+        body: Row(
+          children: [
+            const Expanded(
+              child: Center(
+                child: Image(
+                  image: NetworkImage(
+                      'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg'),
+                ),
+              ),
             ),
-          ),
+            Expanded(
+              child: Center(
+                child: Text(
+                  "Empty",
+                  style: ref.textTheme.displayLarge?.copyWith(
+                    color: ref.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
