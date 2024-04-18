@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_sample/src/service/theme_service.dart';
 import 'package:flutter_image_sample/src/view/base_view.dart';
 import 'package:flutter_image_sample/src/view/main/main_view_model.dart';
+import 'package:flutter_image_sample/theme/component/drawing_page.dart';
 
 class MainView extends StatelessWidget {
   const MainView({super.key});
@@ -19,9 +20,9 @@ class MainView extends StatelessWidget {
             ),
           ),
         ),
-        body: Row(
+        body: const Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Image(
                   image: NetworkImage(
@@ -31,12 +32,7 @@ class MainView extends StatelessWidget {
             ),
             Expanded(
               child: Center(
-                child: Text(
-                  "Empty",
-                  style: ref.textTheme.displayLarge?.copyWith(
-                    color: ref.colorScheme.onSurface,
-                  ),
-                ),
+                child: DrawingPage(),
               ),
             ),
           ],
