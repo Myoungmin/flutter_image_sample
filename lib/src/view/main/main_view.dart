@@ -4,15 +4,8 @@ import 'package:flutter_image_sample/src/view/base_view.dart';
 import 'package:flutter_image_sample/src/view/main/main_view_model.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page.dart';
 
-class MainView extends StatefulWidget {
-  const MainView({Key? key}) : super(key: key);
-
-  @override
-  _MainViewState createState() => _MainViewState();
-}
-
-class _MainViewState extends State<MainView> {
-  String _position = 'Mouse Position: ';
+class MainView extends StatelessWidget {
+  const MainView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,29 +20,17 @@ class _MainViewState extends State<MainView> {
             ),
           ),
         ),
-        body: Row(
+        body: const Row(
           children: [
             Expanded(
               child: Center(
-                child: MouseRegion(
-                  onHover: (PointerEvent event) {
-                    setState(() {
-                      _position =
-                          'Mouse Position\nx=${event.localPosition.dx.toInt()}\ny=${event.localPosition.dy.toInt()}';
-                    });
-                  },
-                  child: Image.network(
-                    'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg',
-                  ),
+                child: Image(
+                  image: NetworkImage(
+                      'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg'),
                 ),
               ),
             ),
             Expanded(
-              child: Center(
-                child: Text(_position),
-              ),
-            ),
-            const Expanded(
               child: Center(
                 child: DrawingPage(),
               ),
