@@ -11,6 +11,7 @@ class DrawingPageState extends State<DrawingPage> {
   Offset startingPoint = Offset.zero;
   Offset endingPoint = Offset.zero;
   bool drawing = false;
+  String position = 'Mouse Position: ';
 
   void updatePoints(Offset localPosition) {
     setState(() {
@@ -30,15 +31,25 @@ class DrawingPageState extends State<DrawingPage> {
     });
   }
 
+  void mouseHover(PointerEvent event) {
+    setState(() {
+      position =
+          'Mouse Position\nx=${event.localPosition.dx.toInt()}\ny=${event.localPosition.dy.toInt()}';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GestureDetector(
-        onPanUpdate: (details) => updatePoints(details.localPosition),
-        onPanEnd: (details) => endDrawing(),
-        child: CustomPaint(
-          painter: RectanglePainter(startingPoint, endingPoint),
-          child: Container(),
+      body: MouseRegion(
+        onHover: (event) => mouseHover(event),
+        child: GestureDetector(
+          onPanUpdate: (details) => updatePoints(details.localPosition),
+          onPanEnd: (details) => endDrawing(),
+          child: CustomPaint(
+            painter: RectanglePainter(startingPoint, endingPoint),
+            child: Center(child: Text(position)),
+          ),
         ),
       ),
     );
