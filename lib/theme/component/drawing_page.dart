@@ -30,18 +30,28 @@ class _DrawingPageState extends State<DrawingPage> {
 
   void endDrawing() {
     setState(() {
+      final paint = Paint()
+        ..strokeWidth = 3.0
+        ..style = PaintingStyle.stroke;
       switch (controller.currentMode) {
         case DrawingMode.point:
-          controller.addPoint(controller.endingPoint);
+          paint.color = Colors.red;
+          controller
+              .addAnnotation(PointAnnotation(controller.endingPoint, paint));
           break;
         case DrawingMode.line:
-          controller.addLine(controller.startingPoint, controller.endingPoint);
+          paint.color = Colors.green;
+          controller.addAnnotation(LineAnnotation(
+              controller.startingPoint, controller.endingPoint, paint));
           break;
         case DrawingMode.rectangle:
-          controller.addRect(controller.startingPoint, controller.endingPoint);
+          paint.color = Colors.blue;
+          controller.addAnnotation(RectAnnotation(
+              controller.startingPoint, controller.endingPoint, paint));
           break;
         case DrawingMode.text:
-          controller.addText("Sample Text", controller.endingPoint);
+          controller.addAnnotation(
+              TextAnnotation("Sampe Text", controller.endingPoint, paint));
           break;
       }
     });
@@ -100,44 +110,71 @@ class _DrawingPageState extends State<DrawingPage> {
   }
 }
 
+abstract class Annotation {
+  Paint paint;
+  Annotation(this.paint);
+  void draw(Canvas canvas);
+}
+
+class PointAnnotation extends Annotation {
+  Offset point;
+  PointAnnotation(this.point, Paint paint) : super(paint);
+
+  @override
+  void draw(Canvas canvas) {
+    canvas.drawPoints(PointMode.points, [point], paint);
+  }
+}
+
+class LineAnnotation extends Annotation {
+  Offset start;
+  Offset end;
+  LineAnnotation(this.start, this.end, Paint paint) : super(paint);
+
+  @override
+  void draw(Canvas canvas) {
+    canvas.drawLine(start, end, paint);
+  }
+}
+
+class RectAnnotation extends Annotation {
+  Offset start;
+  Offset end;
+  RectAnnotation(this.start, this.end, Paint paint) : super(paint);
+
+  @override
+  void draw(Canvas canvas) {
+    canvas.drawRect(Rect.fromPoints(start, end), paint);
+  }
+}
+
+class TextAnnotation extends Annotation {
+  String text;
+  Offset position;
+  TextAnnotation(this.text, this.position, Paint paint) : super(paint);
+
+  @override
+  void draw(Canvas canvas) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+          text: text, style: TextStyle(color: paint.color, fontSize: 16)),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, position);
+  }
+}
+
 class AnnotationController {
   Offset startingPoint = Offset.zero;
   Offset endingPoint = Offset.zero;
-  List<Offset> points = [];
-  List<Offset> lineStartPoints = [];
-  List<Offset> lineEndPoints = [];
-  List<Offset> rectStartPoints = [];
-  List<Offset> rectEndPoints = [];
-  List<String> texts = [];
-  List<Offset> textPositions = [];
   String position = 'Mouse Position: ';
   DrawingMode currentMode = DrawingMode.point;
+  List<Annotation> annotations = [];
 
-  void addPoint(Offset point) => points.add(point);
-  void addLine(Offset start, Offset end) {
-    lineStartPoints.add(start);
-    lineEndPoints.add(end);
-  }
+  void addAnnotation(Annotation annoation) => annotations.add(annoation);
 
-  void addRect(Offset start, Offset end) {
-    rectStartPoints.add(start);
-    rectEndPoints.add(end);
-  }
-
-  void addText(String text, Offset position) {
-    texts.add(text);
-    textPositions.add(position);
-  }
-
-  void clear() {
-    points.clear();
-    lineStartPoints.clear();
-    lineEndPoints.clear();
-    rectStartPoints.clear();
-    rectEndPoints.clear();
-    texts.clear();
-    textPositions.clear();
-  }
+  void clear() => annotations.clear();
 }
 
 class AnnotationPainter extends CustomPainter {
@@ -147,40 +184,8 @@ class AnnotationPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..strokeWidth = 3.0
-      ..style = PaintingStyle.stroke;
-
-    // Draw points
-    paint.color = Colors.red;
-    canvas.drawPoints(PointMode.points, controller.points, paint);
-
-    // Draw lines
-    paint.color = Colors.green;
-    for (int i = 0; i < controller.lineStartPoints.length; i++) {
-      canvas.drawLine(
-          controller.lineStartPoints[i], controller.lineEndPoints[i], paint);
-    }
-
-    // Draw rectangles
-    paint.color = Colors.blue;
-    for (int i = 0; i < controller.rectStartPoints.length; i++) {
-      canvas.drawRect(
-          Rect.fromPoints(
-              controller.rectStartPoints[i], controller.rectEndPoints[i]),
-          paint);
-    }
-
-    // Draw text
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
-    for (int i = 0; i < controller.texts.length; i++) {
-      final textSpan = TextSpan(
-        text: controller.texts[i],
-        style: const TextStyle(color: Colors.black, fontSize: 16),
-      );
-      textPainter.text = textSpan;
-      textPainter.layout();
-      textPainter.paint(canvas, controller.textPositions[i]);
+    for (var element in controller.annotations) {
+      element.draw(canvas);
     }
   }
 
