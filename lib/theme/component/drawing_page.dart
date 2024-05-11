@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+enum DrawingMode { point, line, rectangle, text }
+
 class DrawingPage extends StatefulWidget {
   const DrawingPage({Key? key}) : super(key: key);
 
@@ -12,7 +14,7 @@ class DrawingPage extends StatefulWidget {
 class _DrawingPageState extends State<DrawingPage> {
   final AnnotationController controller = AnnotationController();
 
-  void setMode(String mode, Offset localPosition) {
+  void setMode(DrawingMode mode, Offset localPosition) {
     setState(() {
       controller.startingPoint = localPosition;
       controller.endingPoint = localPosition;
@@ -28,14 +30,19 @@ class _DrawingPageState extends State<DrawingPage> {
 
   void endDrawing() {
     setState(() {
-      if (controller.currentMode == 'point') {
-        controller.addPoint(controller.endingPoint);
-      } else if (controller.currentMode == 'line') {
-        controller.addLine(controller.startingPoint, controller.endingPoint);
-      } else if (controller.currentMode == 'rectangle') {
-        controller.addRect(controller.startingPoint, controller.endingPoint);
-      } else if (controller.currentMode == 'text') {
-        controller.addText("Sample Text", controller.endingPoint);
+      switch (controller.currentMode) {
+        case DrawingMode.point:
+          controller.addPoint(controller.endingPoint);
+          break;
+        case DrawingMode.line:
+          controller.addLine(controller.startingPoint, controller.endingPoint);
+          break;
+        case DrawingMode.rectangle:
+          controller.addRect(controller.startingPoint, controller.endingPoint);
+          break;
+        case DrawingMode.text:
+          controller.addText("Sample Text", controller.endingPoint);
+          break;
       }
     });
   }
@@ -73,16 +80,16 @@ class _DrawingPageState extends State<DrawingPage> {
             alignment: MainAxisAlignment.center,
             children: [
               ElevatedButton(
-                  onPressed: () => setMode('point', Offset.zero),
+                  onPressed: () => setMode(DrawingMode.point, Offset.zero),
                   child: const Text('Add Point')),
               ElevatedButton(
-                  onPressed: () => setMode('line', Offset.zero),
+                  onPressed: () => setMode(DrawingMode.line, Offset.zero),
                   child: const Text('Add Line')),
               ElevatedButton(
-                  onPressed: () => setMode('rectangle', Offset.zero),
+                  onPressed: () => setMode(DrawingMode.rectangle, Offset.zero),
                   child: const Text('Add Rectangle')),
               ElevatedButton(
-                  onPressed: () => setMode('text', Offset.zero),
+                  onPressed: () => setMode(DrawingMode.text, Offset.zero),
                   child: const Text('Add Text')),
               ElevatedButton(onPressed: clear, child: const Text('Clear')),
             ],
@@ -104,7 +111,7 @@ class AnnotationController {
   List<String> texts = [];
   List<Offset> textPositions = [];
   String position = 'Mouse Position: ';
-  String currentMode = '';
+  DrawingMode currentMode = DrawingMode.point;
 
   void addPoint(Offset point) => points.add(point);
   void addLine(Offset start, Offset end) {
