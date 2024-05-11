@@ -3,79 +3,47 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class DrawingPage extends StatefulWidget {
-  const DrawingPage({super.key});
+  const DrawingPage({Key? key}) : super(key: key);
 
   @override
-  DrawingPageState createState() => DrawingPageState();
+  _DrawingPageState createState() => _DrawingPageState();
 }
 
-class DrawingPageState extends State<DrawingPage> {
-  Offset startingPoint = Offset.zero;
-  Offset endingPoint = Offset.zero;
-  List<Offset> points = [];
-  List<Offset> lineStartPoints = [];
-  List<Offset> lineEndPoints = [];
-  List<Offset> rectStartPoints = [];
-  List<Offset> rectEndPoints = [];
-  List<String> texts = [];
-  List<Offset> textPositions = [];
-  bool drawing = false;
-  String currentMode = ''; // 현재 모드를 저장하는 변수
-  String position = 'Mouse Position: ';
+class _DrawingPageState extends State<DrawingPage> {
+  final AnnotationController controller = AnnotationController();
 
   void setMode(String mode, Offset localPosition) {
     setState(() {
-      currentMode = mode;
-      startingPoint = localPosition;
-      endingPoint = localPosition;
+      controller.startingPoint = localPosition;
+      controller.endingPoint = localPosition;
+      controller.currentMode = mode;
     });
   }
 
   void updatePoints(Offset localPosition) {
     setState(() {
-      if (drawing) {
-        endingPoint = localPosition;
-      } else {
-        startingPoint = localPosition;
-        endingPoint = localPosition;
-        drawing = true;
-      }
+      controller.endingPoint = localPosition;
     });
   }
 
   void endDrawing() {
     setState(() {
-      if (currentMode == 'point') {
-        points.add(endingPoint);
-      } else if (currentMode == 'line') {
-        lineStartPoints.add(startingPoint);
-        lineEndPoints.add(endingPoint);
-      } else if (currentMode == 'rectangle') {
-        rectStartPoints.add(startingPoint);
-        rectEndPoints.add(endingPoint);
-      } else if (currentMode == 'text') {
-        texts.add("Sample Text");
-        textPositions.add(endingPoint);
+      if (controller.currentMode == 'point') {
+        controller.addPoint(controller.endingPoint);
+      } else if (controller.currentMode == 'line') {
+        controller.addLine(controller.startingPoint, controller.endingPoint);
+      } else if (controller.currentMode == 'rectangle') {
+        controller.addRect(controller.startingPoint, controller.endingPoint);
+      } else if (controller.currentMode == 'text') {
+        controller.addText("Sample Text", controller.endingPoint);
       }
-      drawing = false;
-    });
-  }
-
-  void mouseHover(PointerEvent event) {
-    setState(() {
-      position =
-          'Mouse Position\nx=${event.localPosition.dx.toInt()}\ny=${event.localPosition.dy.toInt()}';
     });
   }
 
   void clear() {
-    points.clear();
-    lineStartPoints.clear();
-    lineEndPoints.clear();
-    rectStartPoints.clear();
-    rectEndPoints.clear();
-    texts.clear();
-    textPositions.clear();
+    setState(() {
+      controller.clear();
+    });
   }
 
   @override
@@ -85,23 +53,18 @@ class DrawingPageState extends State<DrawingPage> {
         children: [
           Expanded(
             child: MouseRegion(
-              onHover: (event) => mouseHover(event),
+              onHover: (PointerEvent event) => setState(() {
+                controller.position =
+                    'Mouse Position: x=${event.localPosition.dx.toInt()} y=${event.localPosition.dy.toInt()}';
+              }),
               child: GestureDetector(
                 onPanStart: (details) =>
-                    setMode(currentMode, details.localPosition),
+                    setMode(controller.currentMode, details.localPosition),
                 onPanUpdate: (details) => updatePoints(details.localPosition),
                 onPanEnd: (details) => endDrawing(),
                 child: CustomPaint(
-                  painter: RectanglePainter(
-                    points: points,
-                    lineStartPoints: lineStartPoints,
-                    lineEndPoints: lineEndPoints,
-                    rectStartPoints: rectStartPoints,
-                    rectEndPoints: rectEndPoints,
-                    texts: texts,
-                    textPositions: textPositions,
-                  ),
-                  child: Center(child: Text(position)),
+                  painter: AnnotationPainter(controller: controller),
+                  child: Center(child: Text(controller.position)),
                 ),
               ),
             ),
@@ -130,24 +93,50 @@ class DrawingPageState extends State<DrawingPage> {
   }
 }
 
-class RectanglePainter extends CustomPainter {
-  final List<Offset> points;
-  final List<Offset> lineStartPoints;
-  final List<Offset> lineEndPoints;
-  final List<Offset> rectStartPoints;
-  final List<Offset> rectEndPoints;
-  final List<String> texts;
-  final List<Offset> textPositions;
+class AnnotationController {
+  Offset startingPoint = Offset.zero;
+  Offset endingPoint = Offset.zero;
+  List<Offset> points = [];
+  List<Offset> lineStartPoints = [];
+  List<Offset> lineEndPoints = [];
+  List<Offset> rectStartPoints = [];
+  List<Offset> rectEndPoints = [];
+  List<String> texts = [];
+  List<Offset> textPositions = [];
+  String position = 'Mouse Position: ';
+  String currentMode = '';
 
-  RectanglePainter({
-    this.points = const [],
-    this.lineStartPoints = const [],
-    this.lineEndPoints = const [],
-    this.rectStartPoints = const [],
-    this.rectEndPoints = const [],
-    this.texts = const [],
-    this.textPositions = const [],
-  });
+  void addPoint(Offset point) => points.add(point);
+  void addLine(Offset start, Offset end) {
+    lineStartPoints.add(start);
+    lineEndPoints.add(end);
+  }
+
+  void addRect(Offset start, Offset end) {
+    rectStartPoints.add(start);
+    rectEndPoints.add(end);
+  }
+
+  void addText(String text, Offset position) {
+    texts.add(text);
+    textPositions.add(position);
+  }
+
+  void clear() {
+    points.clear();
+    lineStartPoints.clear();
+    lineEndPoints.clear();
+    rectStartPoints.clear();
+    rectEndPoints.clear();
+    texts.clear();
+    textPositions.clear();
+  }
+}
+
+class AnnotationPainter extends CustomPainter {
+  final AnnotationController controller;
+
+  AnnotationPainter({required this.controller});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -155,29 +144,36 @@ class RectanglePainter extends CustomPainter {
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke;
 
+    // Draw points
     paint.color = Colors.red;
-    canvas.drawPoints(PointMode.points, points, paint);
+    canvas.drawPoints(PointMode.points, controller.points, paint);
 
+    // Draw lines
     paint.color = Colors.green;
-    for (int i = 0; i < lineStartPoints.length; i++) {
-      canvas.drawLine(lineStartPoints[i], lineEndPoints[i], paint);
+    for (int i = 0; i < controller.lineStartPoints.length; i++) {
+      canvas.drawLine(
+          controller.lineStartPoints[i], controller.lineEndPoints[i], paint);
     }
 
+    // Draw rectangles
     paint.color = Colors.blue;
-    for (int i = 0; i < rectStartPoints.length; i++) {
+    for (int i = 0; i < controller.rectStartPoints.length; i++) {
       canvas.drawRect(
-          Rect.fromPoints(rectStartPoints[i], rectEndPoints[i]), paint);
+          Rect.fromPoints(
+              controller.rectStartPoints[i], controller.rectEndPoints[i]),
+          paint);
     }
 
+    // Draw text
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
-    for (int i = 0; i < texts.length; i++) {
+    for (int i = 0; i < controller.texts.length; i++) {
       final textSpan = TextSpan(
-        text: texts[i],
+        text: controller.texts[i],
         style: const TextStyle(color: Colors.black, fontSize: 16),
       );
       textPainter.text = textSpan;
       textPainter.layout();
-      textPainter.paint(canvas, textPositions[i]);
+      textPainter.paint(canvas, controller.textPositions[i]);
     }
   }
 
