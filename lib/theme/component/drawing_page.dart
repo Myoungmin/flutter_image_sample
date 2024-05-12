@@ -2,7 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-enum DrawingMode { point, line, rectangle, text }
+enum DrawingMode { point, line, rectangle, text, pan }
 
 class DrawingPage extends StatefulWidget {
   final ImageProvider imageProvider;
@@ -16,6 +16,8 @@ class DrawingPage extends StatefulWidget {
 class _DrawingPageState extends State<DrawingPage> {
   final AnnotationController controller = AnnotationController();
   ui.Image? image;
+  Offset lastPanPosition = Offset.zero;
+  Offset dragStart = Offset.zero;
 
   @override
   void initState() {
@@ -81,6 +83,8 @@ class _DrawingPageState extends State<DrawingPage> {
                 TextAnnotation("Sample Text", controller.endingPoint, paint));
           }
           break;
+        case DrawingMode.pan:
+          break;
       }
     });
   }
@@ -89,6 +93,34 @@ class _DrawingPageState extends State<DrawingPage> {
     setState(() {
       controller.clear();
     });
+  }
+
+  void onPanStart(DragStartDetails details) {
+    if (controller.currentMode == DrawingMode.pan) {
+      dragStart = details.localPosition;
+      lastPanPosition = controller.imageOffset;
+    } else {
+      setMode(controller.currentMode, details.localPosition);
+    }
+  }
+
+  void onPanUpdate(DragUpdateDetails details) {
+    if (controller.currentMode == DrawingMode.pan) {
+      Offset delta = details.localPosition - dragStart;
+      setState(() {
+        controller.imageOffset = lastPanPosition + delta;
+      });
+    } else {
+      updatePoints(details.localPosition);
+    }
+  }
+
+  void onPanEnd(DragEndDetails details) {
+    if (controller.currentMode == DrawingMode.pan) {
+      lastPanPosition = controller.imageOffset;
+    } else {
+      endDrawing();
+    }
   }
 
   @override
@@ -103,10 +135,15 @@ class _DrawingPageState extends State<DrawingPage> {
                     'Mouse Position: x=${event.localPosition.dx.toInt()} y=${event.localPosition.dy.toInt()}';
               }),
               child: GestureDetector(
-                onPanStart: (details) =>
-                    setMode(controller.currentMode, details.localPosition),
-                onPanUpdate: (details) => updatePoints(details.localPosition),
-                onPanEnd: (details) => endDrawing(),
+                onPanStart: (details) {
+                  onPanStart(details);
+                },
+                onPanUpdate: (details) {
+                  onPanUpdate(details);
+                },
+                onPanEnd: (details) {
+                  onPanEnd(details);
+                },
                 child: CustomPaint(
                   painter:
                       AnnotationPainter(controller: controller, image: image),
@@ -171,6 +208,9 @@ class _DrawingPageState extends State<DrawingPage> {
                   onPressed: () => setMode(DrawingMode.text, Offset.zero),
                   child: const Text('Add Text')),
               ElevatedButton(onPressed: clear, child: const Text('Clear')),
+              ElevatedButton(
+                  onPressed: () => setMode(DrawingMode.pan, Offset.zero),
+                  child: const Text('Pan')),
             ],
           ),
         ],
@@ -237,6 +277,7 @@ class TextAnnotation extends Annotation {
 class AnnotationController {
   Offset startingPoint = Offset.zero;
   Offset endingPoint = Offset.zero;
+  Offset imageOffset = Offset.zero;
   String position = 'Mouse Position: ';
   DrawingMode currentMode = DrawingMode.point;
   List<Annotation> annotations = [];
@@ -258,9 +299,11 @@ class AnnotationPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (image != null) {
+      Rect imageRect = Rect.fromLTWH(controller.imageOffset.dx,
+          controller.imageOffset.dy, size.width, size.height);
       paintImage(
         canvas: canvas,
-        rect: Rect.fromLTWH(0, 0, size.width, size.height),
+        rect: imageRect,
         image: image!,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.high,
@@ -278,7 +321,8 @@ class AnnotationPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return oldDelegate is AnnotationPainter && oldDelegate.image != image;
+  bool shouldRepaint(covariant AnnotationPainter oldDelegate) {
+    return oldDelegate.image != image ||
+        oldDelegate.controller.imageOffset != controller.imageOffset;
   }
 }
