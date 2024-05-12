@@ -24,15 +24,10 @@ class MainView extends StatelessWidget {
           children: [
             Expanded(
               child: Center(
-                child: Image(
-                  image: NetworkImage(
+                child: DrawingPage(
+                  imageProvider: NetworkImage(
                       'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg'),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: DrawingPage(),
               ),
             ),
           ],

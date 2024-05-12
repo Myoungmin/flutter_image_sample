@@ -1,11 +1,13 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 enum DrawingMode { point, line, rectangle, text }
 
 class DrawingPage extends StatefulWidget {
-  const DrawingPage({Key? key}) : super(key: key);
+  final ImageProvider imageProvider;
+
+  const DrawingPage({Key? key, required this.imageProvider}) : super(key: key);
 
   @override
   _DrawingPageState createState() => _DrawingPageState();
@@ -13,6 +15,24 @@ class DrawingPage extends StatefulWidget {
 
 class _DrawingPageState extends State<DrawingPage> {
   final AnnotationController controller = AnnotationController();
+  ui.Image? image;
+
+  @override
+  void initState() {
+    super.initState();
+    loadImage();
+  }
+
+  Future<void> loadImage() async {
+    final resolver = ImageStreamListener((ImageInfo info, bool _) {
+      setState(() {
+        image = info.image;
+      });
+    });
+    widget.imageProvider
+        .resolve(const ImageConfiguration())
+        .addListener(resolver);
+  }
 
   void setMode(DrawingMode mode, Offset localPosition) {
     setState(() {
@@ -88,7 +108,8 @@ class _DrawingPageState extends State<DrawingPage> {
                 onPanUpdate: (details) => updatePoints(details.localPosition),
                 onPanEnd: (details) => endDrawing(),
                 child: CustomPaint(
-                  painter: AnnotationPainter(controller: controller),
+                  painter:
+                      AnnotationPainter(controller: controller, image: image),
                   child: Center(child: Text(controller.position)),
                 ),
               ),
@@ -170,7 +191,7 @@ class PointAnnotation extends Annotation {
 
   @override
   void draw(Canvas canvas) {
-    canvas.drawPoints(PointMode.points, [point], paint);
+    canvas.drawPoints(ui.PointMode.points, [point], paint);
   }
 }
 
@@ -230,11 +251,22 @@ class AnnotationController {
 
 class AnnotationPainter extends CustomPainter {
   final AnnotationController controller;
+  final ui.Image? image;
 
-  AnnotationPainter({required this.controller});
+  AnnotationPainter({required this.controller, this.image});
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (image != null) {
+      paintImage(
+        canvas: canvas,
+        rect: Rect.fromLTWH(0, 0, size.width, size.height),
+        image: image!,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+      );
+    }
+
     for (var element in controller.annotations) {
       if ((element is PointAnnotation && controller.showPoint) ||
           (element is LineAnnotation && controller.showLine) ||
@@ -246,5 +278,7 @@ class AnnotationPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return oldDelegate is AnnotationPainter && oldDelegate.image != image;
+  }
 }
