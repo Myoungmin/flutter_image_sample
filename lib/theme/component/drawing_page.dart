@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 enum DrawingMode { point, line, rectangle, text, pan }
@@ -18,6 +19,7 @@ class _DrawingPageState extends State<DrawingPage> {
   ui.Image? image;
   Offset lastPanPosition = Offset.zero;
   Offset dragStart = Offset.zero;
+  double scale = 1.0;
 
   @override
   void initState() {
@@ -38,15 +40,15 @@ class _DrawingPageState extends State<DrawingPage> {
 
   void setMode(DrawingMode mode, Offset localPosition) {
     setState(() {
-      controller.startingPoint = localPosition;
-      controller.endingPoint = localPosition;
+      controller.startingPoint = toImagePosition(localPosition);
+      controller.endingPoint = toImagePosition(localPosition);
       controller.currentMode = mode;
     });
   }
 
   void updatePoints(Offset localPosition) {
     setState(() {
-      controller.endingPoint = localPosition;
+      controller.endingPoint = toImagePosition(localPosition);
     });
   }
 
@@ -130,32 +132,78 @@ class _DrawingPageState extends State<DrawingPage> {
     });
   }
 
+  void onPointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      setState(() {
+        double scaleFactor = event.scrollDelta.dy > 0 ? 0.9 : 1.1;
+        Offset focalPoint = event.localPosition;
+        scaleImage(focalPoint, scaleFactor);
+      });
+    }
+  }
+
+  void scaleImage(Offset focalPoint, double scaleFactor) {
+    // 0.5 ~ 3.0으로 비율 제한할 때 아래 코드
+    //final double newScale = (scale * scaleFactor).clamp(0.5, 3.0);
+
+    final double newScale = scale * scaleFactor;
+    if (newScale == scale) return;
+
+    final Offset imageOffsetBefore = controller.imageOffset;
+
+    // focalPoint에서 이미지의 현재 오프셋을 뺀 후, 현재 스케일로 나누어 포컬 포인트가 이미지 내에서 차지하는 상대적인 위치를 계산
+    final Offset focalPointInImage = (focalPoint - imageOffsetBefore) / scale;
+    scale = newScale;
+
+    // 새로운 스케일을 적용한 후, 포컬 포인트를 기준으로 이미지의 새로운 오프셋을 계산
+    // 이 계산을 통해 포컬 포인트가 확대/축소 후에도 동일한 화면 위치에 유지
+    final Offset imageOffsetAfter = focalPoint - focalPointInImage * scale;
+
+    setState(() {
+      controller.scale = scale;
+      controller.imageOffset = imageOffsetAfter;
+    });
+  }
+
+  Offset toImagePosition(Offset localPosition) {
+    // localPosition에서 현재 이미지의 오프셋(controller.imageOffset)을 뺀다
+    // controller.imageOffset은 이미지가 화면 내에서 어디에 위치해 있는지를 나타낸다
+    // 이를 통해 입력 위치를 이미지의 좌상단을 기준으로 한 좌표계로 변환
+    return (localPosition - controller.imageOffset) / scale;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
           Expanded(
-            child: MouseRegion(
-              onHover: (PointerEvent event) => setState(() {
-                controller.position =
-                    'Mouse Position: x=${event.localPosition.dx.toInt()} y=${event.localPosition.dy.toInt()}';
-              }),
-              child: GestureDetector(
-                onPanStart: (details) {
-                  onPanStart(details);
-                },
-                onPanUpdate: (details) {
-                  onPanUpdate(details);
-                },
-                onPanEnd: (details) {
-                  onPanEnd(details);
-                },
-                onSecondaryTapDown: onSecondaryTapDown,
-                child: CustomPaint(
-                  painter:
-                      AnnotationPainter(controller: controller, image: image),
-                  child: Center(child: Text(controller.position)),
+            child: Listener(
+              onPointerSignal: onPointerSignal,
+              child: MouseRegion(
+                onHover: (PointerEvent event) => setState(() {
+                  controller.position =
+                      'Mouse Position: x=${event.localPosition.dx.toInt()} y=${event.localPosition.dy.toInt()}';
+                }),
+                child: GestureDetector(
+                  onPanStart: (details) {
+                    onPanStart(details);
+                  },
+                  onPanUpdate: (details) {
+                    onPanUpdate(details);
+                  },
+                  onPanEnd: (details) {
+                    onPanEnd(details);
+                  },
+                  onSecondaryTapDown: onSecondaryTapDown,
+                  child: CustomPaint(
+                    painter: AnnotationPainter(
+                      controller: controller,
+                      image: image,
+                      scale: scale,
+                    ),
+                    child: Center(child: Text(controller.position)),
+                  ),
                 ),
               ),
             ),
@@ -230,8 +278,8 @@ class _DrawingPageState extends State<DrawingPage> {
 abstract class Annotation {
   Paint paint;
   Annotation(this.paint);
-  void draw(Canvas canvas);
-  bool contains(Offset position);
+  void draw(Canvas canvas, double scale, Offset imageOffset);
+  bool contains(Offset position, double scale, Offset imageOffset);
 }
 
 class PointAnnotation extends Annotation {
@@ -240,13 +288,18 @@ class PointAnnotation extends Annotation {
   PointAnnotation(this.point, Paint paint) : super(paint);
 
   @override
-  void draw(Canvas canvas) {
-    canvas.drawPoints(ui.PointMode.points, [point], paint);
+  void draw(Canvas canvas, double scale, Offset imageOffset) {
+    canvas.drawPoints(
+      ui.PointMode.points,
+      [(point * scale) + imageOffset],
+      paint,
+    );
   }
 
   @override
-  bool contains(Offset position) {
-    return (point - position).distance <= pointTolerance;
+  bool contains(Offset position, double scale, Offset imageOffset) {
+    return ((point * scale) + imageOffset - position).distance <=
+        pointTolerance;
   }
 }
 
@@ -257,17 +310,25 @@ class LineAnnotation extends Annotation {
   LineAnnotation(this.start, this.end, Paint paint) : super(paint);
 
   @override
-  void draw(Canvas canvas) {
-    canvas.drawLine(start, end, paint);
+  void draw(Canvas canvas, double scale, Offset imageOffset) {
+    canvas.drawLine(
+      (start * scale) + imageOffset,
+      (end * scale) + imageOffset,
+      paint,
+    );
   }
 
   @override
-  bool contains(Offset position) {
-    double distance = _distanceToLineSegment(position, start, end);
+  bool contains(Offset position, double scale, Offset imageOffset) {
+    double distance = distanceToLineSegment(
+      position,
+      (start * scale) + imageOffset,
+      (end * scale) + imageOffset,
+    );
     return distance <= lineTolerance;
   }
 
-  double _distanceToLineSegment(Offset point, Offset start, Offset end) {
+  double distanceToLineSegment(Offset point, Offset start, Offset end) {
     // 선분 start-end의 길이의 제곱을 계산합니다.
     double segmentLengthSquared = (start - end).dx * (start - end).dx +
         (start - end).dy * (start - end).dy;
@@ -301,13 +362,20 @@ class RectAnnotation extends Annotation {
   RectAnnotation(this.start, this.end, Paint paint) : super(paint);
 
   @override
-  void draw(Canvas canvas) {
-    canvas.drawRect(Rect.fromPoints(start, end), paint);
+  void draw(Canvas canvas, double scale, Offset imageOffset) {
+    canvas.drawRect(
+      Rect.fromPoints(
+        (start * scale) + imageOffset,
+        (end * scale) + imageOffset,
+      ),
+      paint,
+    );
   }
 
   @override
-  bool contains(Offset position) {
-    Rect rect = Rect.fromPoints(start, end);
+  bool contains(Offset position, double scale, Offset imageOffset) {
+    Rect rect =
+        Rect.fromPoints(start * scale + imageOffset, end * scale + imageOffset);
     Rect expandedRect = rect.inflate(rectTolerance);
     Rect contractedRect = rect.deflate(rectTolerance);
     return expandedRect.contains(position) &&
@@ -322,25 +390,29 @@ class TextAnnotation extends Annotation {
   TextAnnotation(this.text, this.position, Paint paint) : super(paint);
 
   @override
-  void draw(Canvas canvas) {
+  void draw(Canvas canvas, double scale, Offset imageOffset) {
     final textPainter = TextPainter(
       text: TextSpan(
-          text: text, style: TextStyle(color: paint.color, fontSize: 16)),
+        text: text,
+        style: TextStyle(color: paint.color, fontSize: 16 * scale),
+      ),
       textDirection: TextDirection.ltr,
     );
     textPainter.layout();
-    textPainter.paint(canvas, position);
+    textPainter.paint(canvas, (position * scale) + imageOffset);
   }
 
   @override
-  bool contains(Offset position) {
+  bool contains(Offset position, double scale, Offset imageOffset) {
     final textPainter = TextPainter(
       text: TextSpan(
-          text: text, style: TextStyle(color: paint.color, fontSize: 16)),
+        text: text,
+        style: TextStyle(color: paint.color, fontSize: 16),
+      ),
       textDirection: TextDirection.ltr,
     );
     textPainter.layout();
-    Rect textRect = position & textPainter.size;
+    Rect textRect = ((this.position * scale) + imageOffset) & textPainter.size;
     return textRect.inflate(textPadding).contains(position);
   }
 }
@@ -356,10 +428,12 @@ class AnnotationController {
   bool showLine = true;
   bool showRect = true;
   bool showText = true;
+  double scale = 1.0;
 
   void addAnnotation(Annotation annotation) => annotations.add(annotation);
   void removeAnnotationAtPosition(Offset position) {
-    annotations.removeWhere((annotation) => annotation.contains(position));
+    annotations.removeWhere(
+        (annotation) => annotation.contains(position, scale, imageOffset));
   }
 
   void clear() => annotations.clear();
@@ -368,14 +442,23 @@ class AnnotationController {
 class AnnotationPainter extends CustomPainter {
   final AnnotationController controller;
   final ui.Image? image;
+  final double scale;
 
-  AnnotationPainter({required this.controller, this.image});
+  AnnotationPainter({
+    required this.controller,
+    this.image,
+    required this.scale,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (image != null) {
-      Rect imageRect = Rect.fromLTWH(controller.imageOffset.dx,
-          controller.imageOffset.dy, size.width, size.height);
+      Rect imageRect = Rect.fromLTWH(
+        controller.imageOffset.dx,
+        controller.imageOffset.dy,
+        image!.width.toDouble() * scale,
+        image!.height.toDouble() * scale,
+      );
       paintImage(
         canvas: canvas,
         rect: imageRect,
@@ -390,7 +473,7 @@ class AnnotationPainter extends CustomPainter {
           (element is LineAnnotation && controller.showLine) ||
           (element is RectAnnotation && controller.showRect) ||
           (element is TextAnnotation && controller.showText)) {
-        element.draw(canvas);
+        element.draw(canvas, scale, controller.imageOffset);
       }
     }
   }
@@ -398,6 +481,7 @@ class AnnotationPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant AnnotationPainter oldDelegate) {
     return oldDelegate.image != image ||
-        oldDelegate.controller.imageOffset != controller.imageOffset;
+        oldDelegate.controller.imageOffset != controller.imageOffset ||
+        oldDelegate.scale != scale;
   }
 }
