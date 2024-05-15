@@ -31,11 +31,35 @@ class _DrawingPageState extends State<DrawingPage> {
     final resolver = ImageStreamListener((ImageInfo info, bool _) {
       setState(() {
         image = info.image;
+        fitToScreen();
       });
     });
     widget.imageProvider
         .resolve(const ImageConfiguration())
         .addListener(resolver);
+  }
+
+  void fitToScreen() {
+    if (image == null) return;
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final double screenHeight =
+        screenSize.height - 150; // 버튼바 및 기타 UI 요소의 높이를 고려
+
+    final double imageWidth = image!.width.toDouble();
+    final double imageHeight = image!.height.toDouble();
+
+    final double widthRatio = screenWidth / imageWidth;
+    final double heightRatio = screenHeight / imageHeight;
+
+    setState(() {
+      scale = widthRatio < heightRatio ? widthRatio : heightRatio;
+      controller.imageOffset = Offset(
+        (screenWidth - imageWidth * scale) / 2,
+        (screenHeight - imageHeight * scale) / 2,
+      );
+      controller.scale = scale;
+    });
   }
 
   void setMode(DrawingMode mode, Offset localPosition) {
@@ -267,6 +291,7 @@ class _DrawingPageState extends State<DrawingPage> {
               ElevatedButton(
                   onPressed: () => setMode(DrawingMode.pan, Offset.zero),
                   child: const Text('Pan')),
+              ElevatedButton(onPressed: fitToScreen, child: const Text('Fit')),
             ],
           ),
         ],
