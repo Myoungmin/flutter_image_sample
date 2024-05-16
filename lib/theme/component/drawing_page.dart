@@ -20,6 +20,7 @@ class _DrawingPageState extends State<DrawingPage> {
   Offset lastPanPosition = Offset.zero;
   Offset dragStart = Offset.zero;
   double scale = 1.0;
+  Offset hoverPosition = Offset.zero;
 
   @override
   void initState() {
@@ -204,36 +205,58 @@ class _DrawingPageState extends State<DrawingPage> {
           Expanded(
             child: Listener(
               onPointerSignal: onPointerSignal,
-              child: MouseRegion(
-                onHover: (PointerEvent event) => setState(() {
-                  controller.position =
-                      'Mouse Position: x=${event.localPosition.dx.toInt()} y=${event.localPosition.dy.toInt()}';
-                }),
-                child: GestureDetector(
-                  onPanStart: (details) {
-                    onPanStart(details);
-                  },
-                  onPanUpdate: (details) {
-                    onPanUpdate(details);
-                  },
-                  onPanEnd: (details) {
-                    onPanEnd(details);
-                  },
-                  onSecondaryTapDown: onSecondaryTapDown,
-                  child: CustomPaint(
-                    painter: AnnotationPainter(
-                      controller: controller,
-                      image: image,
-                      scale: scale,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: MouseRegion(
+                      onHover: (PointerEvent event) {
+                        setState(() {
+                          controller.position =
+                              'Mouse Position: x=${event.localPosition.dx.toInt()} y=${event.localPosition.dy.toInt()}';
+                          hoverPosition = event.localPosition;
+                        });
+                      },
+                      child: GestureDetector(
+                        onPanStart: (details) {
+                          onPanStart(details);
+                        },
+                        onPanUpdate: (details) {
+                          onPanUpdate(details);
+                        },
+                        onPanEnd: (details) {
+                          onPanEnd(details);
+                        },
+                        onSecondaryTapDown: onSecondaryTapDown,
+                        child: CustomPaint(
+                          painter: AnnotationPainter(
+                            controller: controller,
+                            image: image,
+                            scale: scale,
+                          ),
+                          child: const Center(),
+                        ),
+                      ),
                     ),
-                    child: Center(child: Text(controller.position)),
                   ),
-                ),
+                  SizedBox(
+                    width: 150,
+                    height: 150,
+                    child: CustomPaint(
+                      painter: ZoomPainter(
+                        image: image,
+                        scale: scale,
+                        imageOffset: controller.imageOffset,
+                        hoverPosition: hoverPosition,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
           Wrap(
             children: [
+              Text(controller.position),
               CheckboxListTile(
                 title: const Text("Show Points"),
                 value: controller.showPoint,
@@ -508,5 +531,41 @@ class AnnotationPainter extends CustomPainter {
     return oldDelegate.image != image ||
         oldDelegate.controller.imageOffset != controller.imageOffset ||
         oldDelegate.scale != scale;
+  }
+}
+
+class ZoomPainter extends CustomPainter {
+  final ui.Image? image;
+  final double scale;
+  final Offset imageOffset;
+  final Offset hoverPosition;
+
+  ZoomPainter({
+    required this.image,
+    required this.scale,
+    required this.imageOffset,
+    required this.hoverPosition,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (image != null) {
+      final zoomScale = scale * 2.0;
+      final src = Rect.fromLTWH(
+        (hoverPosition.dx - imageOffset.dx) / scale -
+            size.width / (2 * zoomScale),
+        (hoverPosition.dy - imageOffset.dy) / scale -
+            size.height / (2 * zoomScale),
+        size.width / zoomScale,
+        size.height / zoomScale,
+      );
+      final dst = Rect.fromLTWH(0, 0, size.width, size.height);
+      canvas.drawImageRect(image!, src, dst, Paint());
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
   }
 }
