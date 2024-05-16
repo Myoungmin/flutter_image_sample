@@ -11,12 +11,13 @@ class DrawingPage extends StatefulWidget {
   const DrawingPage({Key? key, required this.imageProvider}) : super(key: key);
 
   @override
-  _DrawingPageState createState() => _DrawingPageState();
+  DrawingPageState createState() => DrawingPageState();
 }
 
-class _DrawingPageState extends State<DrawingPage> {
+class DrawingPageState extends State<DrawingPage> {
   final AnnotationController controller = AnnotationController();
   ui.Image? image;
+  ui.Image? annotationImage;
   Offset lastPanPosition = Offset.zero;
   Offset dragStart = Offset.zero;
   double scale = 1.0;
@@ -33,6 +34,7 @@ class _DrawingPageState extends State<DrawingPage> {
       setState(() {
         image = info.image;
         fitToScreen();
+        _createAnnotationImage();
       });
     });
     widget.imageProvider
@@ -114,12 +116,14 @@ class _DrawingPageState extends State<DrawingPage> {
           break;
       }
     });
+    _createAnnotationImage(); // 주석을 그린 후 이미지 업데이트
   }
 
   void clear() {
     setState(() {
       controller.clear();
     });
+    _createAnnotationImage(); // 주석을 지운 후 이미지 업데이트
   }
 
   void onPanStart(DragStartDetails details) {
@@ -155,6 +159,7 @@ class _DrawingPageState extends State<DrawingPage> {
     setState(() {
       controller.removeAnnotationAtPosition(position);
     });
+    _createAnnotationImage(); // 주석을 삭제한 후 이미지 업데이트
   }
 
   void onPointerSignal(PointerSignalEvent event) {
@@ -195,6 +200,40 @@ class _DrawingPageState extends State<DrawingPage> {
     // controller.imageOffset은 이미지가 화면 내에서 어디에 위치해 있는지를 나타낸다
     // 이를 통해 입력 위치를 이미지의 좌상단을 기준으로 한 좌표계로 변환
     return (localPosition - controller.imageOffset) / scale;
+  }
+
+  Future<void> _createAnnotationImage() async {
+    if (image == null) return;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder,
+        Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble()));
+
+    // 이미지 그리기
+    paintImage(
+      canvas: canvas,
+      rect: Rect.fromLTWH(
+          0, 0, image!.width.toDouble(), image!.height.toDouble()),
+      image: image!,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
+    );
+
+    // 주석 그리기
+    for (var element in controller.annotations) {
+      if ((element is PointAnnotation && controller.showPoint) ||
+          (element is LineAnnotation && controller.showLine) ||
+          (element is RectAnnotation && controller.showRect) ||
+          (element is TextAnnotation && controller.showText)) {
+        element.draw(canvas, 1.0, Offset.zero);
+      }
+    }
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(image!.width, image!.height);
+    setState(() {
+      annotationImage = img;
+    });
   }
 
   @override
@@ -241,14 +280,16 @@ class _DrawingPageState extends State<DrawingPage> {
                   SizedBox(
                     width: 150,
                     height: 150,
-                    child: CustomPaint(
-                      painter: ZoomPainter(
-                        image: image,
-                        scale: scale,
-                        imageOffset: controller.imageOffset,
-                        hoverPosition: hoverPosition,
-                      ),
-                    ),
+                    child: annotationImage != null
+                        ? CustomPaint(
+                            painter: ZoomPainter(
+                              image: annotationImage,
+                              scale: scale,
+                              imageOffset: controller.imageOffset,
+                              hoverPosition: hoverPosition,
+                            ),
+                          )
+                        : Container(),
                   ),
                 ],
               ),
@@ -530,7 +571,8 @@ class AnnotationPainter extends CustomPainter {
   bool shouldRepaint(covariant AnnotationPainter oldDelegate) {
     return oldDelegate.image != image ||
         oldDelegate.controller.imageOffset != controller.imageOffset ||
-        oldDelegate.scale != scale;
+        oldDelegate.scale != scale ||
+        oldDelegate.controller.annotations != controller.annotations;
   }
 }
 
