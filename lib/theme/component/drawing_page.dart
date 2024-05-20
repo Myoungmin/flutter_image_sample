@@ -565,6 +565,31 @@ class AnnotationPainter extends CustomPainter {
         element.draw(canvas, scale, controller.imageOffset);
       }
     }
+
+    // 현재 드래그 중인 도형 그리기
+    if (controller.currentMode == DrawingMode.line) {
+      final paint = Paint()
+        ..strokeWidth = 3.0
+        ..style = PaintingStyle.stroke
+        ..color = Colors.green;
+      canvas.drawLine(
+        (controller.startingPoint * scale) + controller.imageOffset,
+        (controller.endingPoint * scale) + controller.imageOffset,
+        paint,
+      );
+    } else if (controller.currentMode == DrawingMode.rectangle) {
+      final paint = Paint()
+        ..strokeWidth = 3.0
+        ..style = PaintingStyle.stroke
+        ..color = Colors.blue;
+      canvas.drawRect(
+        Rect.fromPoints(
+          (controller.startingPoint * scale) + controller.imageOffset,
+          (controller.endingPoint * scale) + controller.imageOffset,
+        ),
+        paint,
+      );
+    }
   }
 
   @override
