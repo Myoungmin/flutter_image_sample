@@ -22,6 +22,7 @@ class DrawingPageState extends State<DrawingPage> {
   Offset dragStart = Offset.zero;
   double scale = 1.0;
   Offset hoverPosition = Offset.zero;
+  bool isDragging = false;
 
   @override
   void initState() {
@@ -132,6 +133,9 @@ class DrawingPageState extends State<DrawingPage> {
       lastPanPosition = controller.imageOffset;
     } else {
       setMode(controller.currentMode, details.localPosition);
+      setState(() {
+        isDragging = true;
+      });
     }
   }
 
@@ -151,6 +155,9 @@ class DrawingPageState extends State<DrawingPage> {
       lastPanPosition = controller.imageOffset;
     } else {
       endDrawing();
+      setState(() {
+        isDragging = false;
+      });
     }
   }
 
@@ -268,10 +275,10 @@ class DrawingPageState extends State<DrawingPage> {
                         onSecondaryTapDown: onSecondaryTapDown,
                         child: CustomPaint(
                           painter: AnnotationPainter(
-                            controller: controller,
-                            image: image,
-                            scale: scale,
-                          ),
+                              controller: controller,
+                              image: image,
+                              scale: scale,
+                              isDragging: isDragging),
                           child: const Center(),
                         ),
                       ),
@@ -532,11 +539,13 @@ class AnnotationPainter extends CustomPainter {
   final AnnotationController controller;
   final ui.Image? image;
   final double scale;
+  final bool isDragging;
 
   AnnotationPainter({
     required this.controller,
     this.image,
     required this.scale,
+    required this.isDragging,
   });
 
   @override
@@ -566,29 +575,30 @@ class AnnotationPainter extends CustomPainter {
       }
     }
 
-    // 현재 드래그 중인 도형 그리기
-    if (controller.currentMode == DrawingMode.line) {
-      final paint = Paint()
-        ..strokeWidth = 3.0
-        ..style = PaintingStyle.stroke
-        ..color = Colors.green;
-      canvas.drawLine(
-        (controller.startingPoint * scale) + controller.imageOffset,
-        (controller.endingPoint * scale) + controller.imageOffset,
-        paint,
-      );
-    } else if (controller.currentMode == DrawingMode.rectangle) {
-      final paint = Paint()
-        ..strokeWidth = 3.0
-        ..style = PaintingStyle.stroke
-        ..color = Colors.blue;
-      canvas.drawRect(
-        Rect.fromPoints(
+    if (isDragging) {
+      if (controller.currentMode == DrawingMode.line) {
+        final paint = Paint()
+          ..strokeWidth = 3.0
+          ..style = PaintingStyle.stroke
+          ..color = Colors.green;
+        canvas.drawLine(
           (controller.startingPoint * scale) + controller.imageOffset,
           (controller.endingPoint * scale) + controller.imageOffset,
-        ),
-        paint,
-      );
+          paint,
+        );
+      } else if (controller.currentMode == DrawingMode.rectangle) {
+        final paint = Paint()
+          ..strokeWidth = 3.0
+          ..style = PaintingStyle.stroke
+          ..color = Colors.blue;
+        canvas.drawRect(
+          Rect.fromPoints(
+            (controller.startingPoint * scale) + controller.imageOffset,
+            (controller.endingPoint * scale) + controller.imageOffset,
+          ),
+          paint,
+        );
+      }
     }
   }
 
