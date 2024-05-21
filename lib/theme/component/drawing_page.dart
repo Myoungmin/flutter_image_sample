@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-enum DrawingMode { point, line, rectangle, text, pan }
+enum DrawingMode { point, line, rectangle, text, pan, magnify }
 
 class DrawingPage extends StatefulWidget {
   final ImageProvider imageProvider;
@@ -114,6 +114,8 @@ class DrawingPageState extends State<DrawingPage> {
           }
           break;
         case DrawingMode.pan:
+          break;
+        case DrawingMode.magnify:
           break;
       }
     });
@@ -362,6 +364,9 @@ class DrawingPageState extends State<DrawingPage> {
               ElevatedButton(
                   onPressed: () => setMode(DrawingMode.pan, Offset.zero),
                   child: const Text('Pan')),
+              ElevatedButton(
+                  onPressed: () => setMode(DrawingMode.magnify, Offset.zero),
+                  child: const Text('Magnify')),
               ElevatedButton(onPressed: fitToScreen, child: const Text('Fit')),
             ],
           ),
@@ -575,22 +580,38 @@ class AnnotationPainter extends CustomPainter {
       }
     }
 
+    Color color;
+    switch (controller.currentMode) {
+      case DrawingMode.line:
+        color = Colors.green;
+        break;
+      case DrawingMode.rectangle:
+        color = Colors.blue;
+        break;
+      case DrawingMode.magnify:
+        color = Colors.red;
+        break;
+      default:
+        color = Colors.black;
+    }
+
     if (isDragging) {
       if (controller.currentMode == DrawingMode.line) {
         final paint = Paint()
           ..strokeWidth = 3.0
           ..style = PaintingStyle.stroke
-          ..color = Colors.green;
+          ..color = color;
         canvas.drawLine(
           (controller.startingPoint * scale) + controller.imageOffset,
           (controller.endingPoint * scale) + controller.imageOffset,
           paint,
         );
-      } else if (controller.currentMode == DrawingMode.rectangle) {
+      } else if (controller.currentMode == DrawingMode.rectangle ||
+          controller.currentMode == DrawingMode.magnify) {
         final paint = Paint()
           ..strokeWidth = 3.0
           ..style = PaintingStyle.stroke
-          ..color = Colors.blue;
+          ..color = color;
         canvas.drawRect(
           Rect.fromPoints(
             (controller.startingPoint * scale) + controller.imageOffset,
