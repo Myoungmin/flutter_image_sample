@@ -116,10 +116,34 @@ class DrawingPageState extends State<DrawingPage> {
         case DrawingMode.pan:
           break;
         case DrawingMode.magnify:
+          magnifyRect(Rect.fromPoints(
+              controller.startingPoint, controller.endingPoint));
           break;
       }
     });
     _createAnnotationImage(); // 주석을 그린 후 이미지 업데이트
+  }
+
+  void magnifyRect(Rect rect) {
+    final screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final double screenHeight = screenSize.height;
+
+    final double newScale = scale *
+        (screenWidth / rect.width < screenHeight / rect.height
+            ? screenWidth / rect.width
+            : screenHeight / rect.height);
+
+    final Offset newOffset = Offset(
+      -rect.left * newScale + (screenWidth - rect.width * newScale) / 2,
+      -rect.top * newScale + (screenHeight - rect.height * newScale) / 2,
+    );
+
+    setState(() {
+      scale = newScale;
+      controller.imageOffset = newOffset;
+      controller.scale = newScale;
+    });
   }
 
   void clear() {
