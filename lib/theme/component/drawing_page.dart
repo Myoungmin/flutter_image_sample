@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
@@ -64,6 +66,40 @@ class DrawingPageState extends State<DrawingPage> {
       );
       controller.scale = scale;
     });
+  }
+
+  void invertColor() async {
+    if (image == null) return;
+
+    final ByteData? byteData =
+        await image!.toByteData(format: ui.ImageByteFormat.rawRgba);
+
+    if (byteData == null) return;
+
+    final Uint8List data = byteData.buffer.asUint8List();
+
+    for (int i = 0; i < data.length; i += 4) {
+      data[i] = 255 - data[i]; // Red
+      data[i + 1] = 255 - data[i + 1]; // Green
+      data[i + 2] = 255 - data[i + 2]; // Blue
+    }
+
+    final ui.Image invertedImage =
+        await _createImageFromBytes(image!.width, image!.height, data);
+    setState(() {
+      image = invertedImage;
+      annotationImage = invertedImage;
+    });
+  }
+
+  Future<ui.Image> _createImageFromBytes(
+      int width, int height, Uint8List data) async {
+    final Completer<ui.Image> completer = Completer();
+    ui.decodeImageFromPixels(data, width, height, ui.PixelFormat.rgba8888,
+        (ui.Image img) {
+      completer.complete(img);
+    });
+    return completer.future;
   }
 
   void setMode(DrawingMode mode, Offset localPosition) {
@@ -392,6 +428,8 @@ class DrawingPageState extends State<DrawingPage> {
                   onPressed: () => setMode(DrawingMode.magnify, Offset.zero),
                   child: const Text('Magnify')),
               ElevatedButton(onPressed: fitToScreen, child: const Text('Fit')),
+              ElevatedButton(
+                  onPressed: invertColor, child: const Text('Invert')),
             ],
           ),
         ],
