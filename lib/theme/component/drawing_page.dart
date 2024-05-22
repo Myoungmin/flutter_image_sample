@@ -25,24 +25,35 @@ class DrawingPageState extends State<DrawingPage> {
   double scale = 1.0;
   Offset hoverPosition = Offset.zero;
   bool isDragging = false;
+  late ImageStreamListener _imageStreamListener;
 
   @override
   void initState() {
     super.initState();
-    loadImage();
+    _imageStreamListener = ImageStreamListener(onImageLoaded);
+    addImageListener();
   }
 
-  Future<void> loadImage() async {
-    final resolver = ImageStreamListener((ImageInfo info, bool _) {
-      setState(() {
-        image = info.image;
-        fitToScreen();
-        _createAnnotationImage();
-      });
+  void onImageLoaded(ImageInfo info, bool _) {
+    setState(() {
+      image = info.image;
+      fitToScreen();
+      _createAnnotationImage();
     });
+  }
+
+  Future<void> addImageListener() async {
     widget.imageProvider
         .resolve(const ImageConfiguration())
-        .addListener(resolver);
+        .addListener(_imageStreamListener);
+  }
+
+  @override
+  void dispose() {
+    widget.imageProvider
+        .resolve(const ImageConfiguration())
+        .removeListener(_imageStreamListener);
+    super.dispose();
   }
 
   void fitToScreen() {
@@ -85,14 +96,14 @@ class DrawingPageState extends State<DrawingPage> {
     }
 
     final ui.Image invertedImage =
-        await _createImageFromBytes(image!.width, image!.height, data);
+        await createImageFromBytes(image!.width, image!.height, data);
     setState(() {
       image = invertedImage;
       annotationImage = invertedImage;
     });
   }
 
-  Future<ui.Image> _createImageFromBytes(
+  Future<ui.Image> createImageFromBytes(
       int width, int height, Uint8List data) async {
     final Completer<ui.Image> completer = Completer();
     ui.decodeImageFromPixels(data, width, height, ui.PixelFormat.rgba8888,
