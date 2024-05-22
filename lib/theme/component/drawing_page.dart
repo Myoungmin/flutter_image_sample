@@ -34,9 +34,24 @@ class DrawingPageState extends State<DrawingPage> {
     addImageListener();
   }
 
+  void setImageState(ui.Image newImage) {
+    setState(() {
+      image = newImage;
+      annotationImage = newImage;
+    });
+  }
+
+  void setControllerState(double newScale, Offset newOffset) {
+    setState(() {
+      scale = newScale;
+      controller.scale = newScale;
+      controller.imageOffset = newOffset;
+    });
+  }
+
   void onImageLoaded(ImageInfo info, bool _) {
     setState(() {
-      image = info.image;
+      setImageState(info.image);
       fitToScreen();
       _createAnnotationImage();
     });
@@ -69,14 +84,13 @@ class DrawingPageState extends State<DrawingPage> {
     final double widthRatio = screenWidth / imageWidth;
     final double heightRatio = screenHeight / imageHeight;
 
-    setState(() {
-      scale = widthRatio < heightRatio ? widthRatio : heightRatio;
-      controller.imageOffset = Offset(
-        (screenWidth - imageWidth * scale) / 2,
-        (screenHeight - imageHeight * scale) / 2,
-      );
-      controller.scale = scale;
-    });
+    final double newScale = widthRatio < heightRatio ? widthRatio : heightRatio;
+    final Offset newOffset = Offset(
+      (screenWidth - imageWidth * newScale) / 2,
+      (screenHeight - imageHeight * newScale) / 2,
+    );
+
+    setControllerState(newScale, newOffset);
   }
 
   void invertColor() async {
@@ -97,10 +111,7 @@ class DrawingPageState extends State<DrawingPage> {
 
     final ui.Image invertedImage =
         await createImageFromBytes(image!.width, image!.height, data);
-    setState(() {
-      image = invertedImage;
-      annotationImage = invertedImage;
-    });
+    setImageState(invertedImage);
   }
 
   Future<ui.Image> createImageFromBytes(
@@ -186,11 +197,7 @@ class DrawingPageState extends State<DrawingPage> {
       -rect.top * newScale + (screenHeight - rect.height * newScale) / 2,
     );
 
-    setState(() {
-      scale = newScale;
-      controller.imageOffset = newOffset;
-      controller.scale = newScale;
-    });
+    setControllerState(newScale, newOffset);
   }
 
   void clear() {
@@ -215,9 +222,7 @@ class DrawingPageState extends State<DrawingPage> {
   void onPanUpdate(DragUpdateDetails details) {
     if (controller.currentMode == DrawingMode.pan) {
       Offset delta = details.localPosition - dragStart;
-      setState(() {
-        controller.imageOffset = lastPanPosition + delta;
-      });
+      setControllerState(scale, lastPanPosition + delta);
     } else {
       updatePoints(details.localPosition);
     }
@@ -269,10 +274,7 @@ class DrawingPageState extends State<DrawingPage> {
     // 이 계산을 통해 포컬 포인트가 확대/축소 후에도 동일한 화면 위치에 유지
     final Offset imageOffsetAfter = focalPoint - focalPointInImage * scale;
 
-    setState(() {
-      controller.scale = scale;
-      controller.imageOffset = imageOffsetAfter;
-    });
+    setControllerState(scale, imageOffsetAfter);
   }
 
   Offset toImagePosition(Offset localPosition) {
