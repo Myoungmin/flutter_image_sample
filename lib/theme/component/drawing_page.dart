@@ -143,32 +143,38 @@ class DrawingPageState extends State<DrawingPage> {
       final paint = Paint()
         ..strokeWidth = 3.0
         ..style = PaintingStyle.stroke;
+
       switch (controller.currentMode) {
         case DrawingMode.point:
           if (controller.showPoint) {
             paint.color = Colors.red;
-            controller
-                .addAnnotation(PointAnnotation(controller.endingPoint, paint));
+            addAnnotation(
+                PointAnnotation(controller.endingPoint, paint), paint);
           }
           break;
         case DrawingMode.line:
           if (controller.showLine) {
             paint.color = Colors.green;
-            controller.addAnnotation(LineAnnotation(
-                controller.startingPoint, controller.endingPoint, paint));
+            addAnnotation(
+                LineAnnotation(
+                    controller.startingPoint, controller.endingPoint, paint),
+                paint);
           }
           break;
         case DrawingMode.rectangle:
           if (controller.showRect) {
             paint.color = Colors.blue;
-            controller.addAnnotation(RectAnnotation(
-                controller.startingPoint, controller.endingPoint, paint));
+            addAnnotation(
+                RectAnnotation(
+                    controller.startingPoint, controller.endingPoint, paint),
+                paint);
           }
           break;
         case DrawingMode.text:
           if (controller.showText) {
-            controller.addAnnotation(
-                TextAnnotation("Sample Text", controller.endingPoint, paint));
+            addAnnotation(
+                TextAnnotation("Sample Text", controller.endingPoint, paint),
+                paint);
           }
           break;
         case DrawingMode.pan:
@@ -179,7 +185,13 @@ class DrawingPageState extends State<DrawingPage> {
           break;
       }
     });
-    _createAnnotationImage(); // 주석을 그린 후 이미지 업데이트
+  }
+
+  void addAnnotation(Annotation annotation, Paint paint) {
+    setState(() {
+      controller.addAnnotation(annotation);
+    });
+    _createAnnotationImage(); // 주석을 추가한 후 이미지 업데이트
   }
 
   void magnifyRect(Rect rect) {
