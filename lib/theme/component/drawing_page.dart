@@ -302,6 +302,16 @@ class DrawingPageState extends State<DrawingPage> {
     );
 
     // 주석 그리기
+    drawAnnotations(canvas);
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(image!.width, image!.height);
+    setState(() {
+      annotationImage = img;
+    });
+  }
+
+  void drawAnnotations(Canvas canvas) {
     for (var element in controller.annotations) {
       if ((element is PointAnnotation && controller.showPoint) ||
           (element is LineAnnotation && controller.showLine) ||
@@ -310,12 +320,6 @@ class DrawingPageState extends State<DrawingPage> {
         element.draw(canvas, 1.0, Offset.zero);
       }
     }
-
-    final picture = recorder.endRecording();
-    final img = await picture.toImage(image!.width, image!.height);
-    setState(() {
-      annotationImage = img;
-    });
   }
 
   @override
