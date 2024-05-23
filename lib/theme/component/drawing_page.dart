@@ -124,6 +124,15 @@ class DrawingPageState extends State<DrawingPage> {
     return completer.future;
   }
 
+  void rotation() {
+    setState(() {
+      controller.rotationAngle += 90;
+      if (controller.rotationAngle >= 360) {
+        controller.rotationAngle = 0;
+      }
+    });
+  }
+
   void setMode(DrawingMode mode, Offset localPosition) {
     setState(() {
       controller.startingPoint = toImagePosition(localPosition);
@@ -364,13 +373,16 @@ class DrawingPageState extends State<DrawingPage> {
                           onPanEnd(details);
                         },
                         onSecondaryTapDown: onSecondaryTapDown,
-                        child: CustomPaint(
-                          painter: AnnotationPainter(
-                              controller: controller,
-                              image: image,
-                              scale: scale,
-                              isDragging: isDragging),
-                          child: const Center(),
+                        child: Transform.rotate(
+                          angle: controller.rotationAngle * 3.1415927 / 180,
+                          child: CustomPaint(
+                            painter: AnnotationPainter(
+                                controller: controller,
+                                image: image,
+                                scale: scale,
+                                isDragging: isDragging),
+                            child: const Center(),
+                          ),
                         ),
                       ),
                     ),
@@ -459,6 +471,8 @@ class DrawingPageState extends State<DrawingPage> {
               ElevatedButton(onPressed: fitToScreen, child: const Text('Fit')),
               ElevatedButton(
                   onPressed: invertColor, child: const Text('Invert')),
+              ElevatedButton(
+                  onPressed: rotation, child: const Text('Rotation')),
             ],
           ),
         ],
@@ -621,6 +635,7 @@ class AnnotationController {
   bool showRect = true;
   bool showText = true;
   double scale = 1.0;
+  double rotationAngle = 0.0;
 
   void addAnnotation(Annotation annotation) => annotations.add(annotation);
   void removeAnnotationAtPosition(Offset position) {
