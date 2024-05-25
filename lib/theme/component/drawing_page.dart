@@ -133,10 +133,8 @@ class DrawingPageState extends State<DrawingPage> {
     });
   }
 
-  void setMode(DrawingMode mode, Offset localPosition) {
+  void setMode(DrawingMode mode) {
     setState(() {
-      controller.startingPoint = toImagePosition(localPosition);
-      controller.endingPoint = toImagePosition(localPosition);
       controller.currentMode = mode;
     });
   }
@@ -233,8 +231,10 @@ class DrawingPageState extends State<DrawingPage> {
       dragStart = details.localPosition;
       lastPanPosition = controller.imageOffset;
     } else {
-      setMode(controller.currentMode, details.localPosition);
+      setMode(controller.currentMode);
       setState(() {
+        controller.startingPoint = toImagePosition(details.localPosition);
+        controller.endingPoint = toImagePosition(details.localPosition);
         isDragging = true;
       });
     }
@@ -450,23 +450,23 @@ class DrawingPageState extends State<DrawingPage> {
             alignment: MainAxisAlignment.center,
             children: [
               ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.point, Offset.zero),
+                  onPressed: () => setMode(DrawingMode.point),
                   child: const Text('Add Point')),
               ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.line, Offset.zero),
+                  onPressed: () => setMode(DrawingMode.line),
                   child: const Text('Add Line')),
               ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.rectangle, Offset.zero),
+                  onPressed: () => setMode(DrawingMode.rectangle),
                   child: const Text('Add Rectangle')),
               ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.text, Offset.zero),
+                  onPressed: () => setMode(DrawingMode.text),
                   child: const Text('Add Text')),
               ElevatedButton(onPressed: clear, child: const Text('Clear')),
               ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.pan, Offset.zero),
+                  onPressed: () => setMode(DrawingMode.pan),
                   child: const Text('Pan')),
               ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.magnify, Offset.zero),
+                  onPressed: () => setMode(DrawingMode.magnify),
                   child: const Text('Magnify')),
               ElevatedButton(onPressed: fitToScreen, child: const Text('Fit')),
               ElevatedButton(
