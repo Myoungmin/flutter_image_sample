@@ -373,14 +373,18 @@ class DrawingPageState extends State<DrawingPage> {
                           onPanEnd(details);
                         },
                         onSecondaryTapDown: onSecondaryTapDown,
-                        child: Transform.rotate(
-                          angle: controller.rotationAngle * 3.1415927 / 180,
+                        child: Transform(
+                          transform: Matrix4.identity()
+                            ..rotateZ(
+                                controller.rotationAngle * 3.1415927 / 180),
+                          alignment: Alignment.center,
                           child: CustomPaint(
                             painter: AnnotationPainter(
-                                controller: controller,
-                                image: image,
-                                scale: scale,
-                                isDragging: isDragging),
+                              controller: controller,
+                              image: image,
+                              scale: scale,
+                              isDragging: isDragging,
+                            ),
                             child: const Center(),
                           ),
                         ),
