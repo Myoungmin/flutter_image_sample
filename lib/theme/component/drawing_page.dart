@@ -251,7 +251,7 @@ class DrawingPageState extends State<DrawingPage> {
 
   void onPanEnd(DragEndDetails details) {
     if (controller.currentMode == DrawingMode.pan) {
-      lastPanPosition = controller.imageOffset;
+      return;
     } else {
       endDrawing();
       setState(() {
