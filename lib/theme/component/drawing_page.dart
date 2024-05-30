@@ -349,124 +349,179 @@ class DrawingPageState extends State<DrawingPage> {
       body: Column(
         children: [
           Expanded(
-            child: Listener(
+            child: DrawingCanvas(
+              controller: controller,
+              image: image,
+              scale: scale,
+              isDragging: isDragging,
+              onPanStart: onPanStart,
+              onPanUpdate: onPanUpdate,
+              onPanEnd: onPanEnd,
+              onSecondaryTapDown: onSecondaryTapDown,
               onPointerSignal: onPointerSignal,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: MouseRegion(
-                      onHover: (PointerEvent event) {
-                        setState(() {
-                          controller.position =
-                              'Mouse Position: x=${event.localPosition.dx.toInt()} y=${event.localPosition.dy.toInt()}';
-                          hoverPosition = event.localPosition;
-                        });
-                      },
-                      child: GestureDetector(
-                        onPanStart: (details) {
-                          onPanStart(details);
-                        },
-                        onPanUpdate: (details) {
-                          onPanUpdate(details);
-                        },
-                        onPanEnd: (details) {
-                          onPanEnd(details);
-                        },
-                        onSecondaryTapDown: onSecondaryTapDown,
-                        child: Transform(
-                          transform: Matrix4.identity()
-                            ..rotateZ(
-                                controller.rotationAngle * 3.1415927 / 180),
-                          alignment: Alignment.center,
-                          child: CustomPaint(
-                            painter: AnnotationPainter(
-                              controller: controller,
-                              image: image,
-                              scale: scale,
-                              isDragging: isDragging,
-                            ),
-                            child: const Center(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              onHover: (event) {
+                setState(() {
+                  controller.position =
+                      'Mouse Position: x=${event.localPosition.dx.toInt()} y=${event.localPosition.dy.toInt()}';
+                  hoverPosition = event.localPosition;
+                });
+              },
             ),
           ),
-          Wrap(
-            children: [
-              Text(controller.position),
-              CheckboxListTile(
-                title: const Text("Show Points"),
-                value: controller.showPoint,
-                onChanged: (bool? value) {
-                  setState(() {
-                    controller.showPoint = value!;
-                  });
-                },
-              ),
-              CheckboxListTile(
-                title: const Text("Show Lines"),
-                value: controller.showLine,
-                onChanged: (bool? value) {
-                  setState(() {
-                    controller.showLine = value!;
-                  });
-                },
-              ),
-              CheckboxListTile(
-                title: const Text("Show Rectangles"),
-                value: controller.showRect,
-                onChanged: (bool? value) {
-                  setState(() {
-                    controller.showRect = value!;
-                  });
-                },
-              ),
-              CheckboxListTile(
-                title: const Text("Show Text"),
-                value: controller.showText,
-                onChanged: (bool? value) {
-                  setState(() {
-                    controller.showText = value!;
-                  });
-                },
-              ),
-            ],
-          ),
-          ButtonBar(
-            alignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.point),
-                  child: const Text('Add Point')),
-              ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.line),
-                  child: const Text('Add Line')),
-              ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.rectangle),
-                  child: const Text('Add Rectangle')),
-              ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.text),
-                  child: const Text('Add Text')),
-              ElevatedButton(onPressed: clear, child: const Text('Clear')),
-              ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.pan),
-                  child: const Text('Pan')),
-              ElevatedButton(
-                  onPressed: () => setMode(DrawingMode.magnify),
-                  child: const Text('Magnify')),
-              ElevatedButton(onPressed: fitToScreen, child: const Text('Fit')),
-              ElevatedButton(
-                  onPressed: invertColor, child: const Text('Invert')),
-              ElevatedButton(
-                  onPressed: rotation, child: const Text('Rotation')),
-            ],
+          DrawingControls(
+            controller: controller,
+            setMode: setMode,
+            clear: clear,
+            fitToScreen: fitToScreen,
+            invertColor: invertColor,
+            rotation: rotation,
           ),
         ],
       ),
+    );
+  }
+}
+
+class DrawingCanvas extends StatelessWidget {
+  final AnnotationController controller;
+  final ui.Image? image;
+  final double scale;
+  final bool isDragging;
+  final void Function(DragStartDetails) onPanStart;
+  final void Function(DragUpdateDetails) onPanUpdate;
+  final void Function(DragEndDetails) onPanEnd;
+  final void Function(TapDownDetails) onSecondaryTapDown;
+  final void Function(PointerSignalEvent) onPointerSignal;
+  final void Function(PointerEvent) onHover;
+
+  const DrawingCanvas({
+    Key? key,
+    required this.controller,
+    this.image,
+    required this.scale,
+    required this.isDragging,
+    required this.onPanStart,
+    required this.onPanUpdate,
+    required this.onPanEnd,
+    required this.onSecondaryTapDown,
+    required this.onPointerSignal,
+    required this.onHover,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerSignal: onPointerSignal,
+      child: MouseRegion(
+        onHover: onHover,
+        child: GestureDetector(
+          onPanStart: onPanStart,
+          onPanUpdate: onPanUpdate,
+          onPanEnd: onPanEnd,
+          onSecondaryTapDown: onSecondaryTapDown,
+          child: Transform(
+            transform: Matrix4.identity()
+              ..rotateZ(controller.rotationAngle * 3.1415927 / 180),
+            alignment: Alignment.center,
+            child: CustomPaint(
+              painter: AnnotationPainter(
+                controller: controller,
+                image: image,
+                scale: scale,
+                isDragging: isDragging,
+              ),
+              child: const Center(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DrawingControls extends StatelessWidget {
+  final AnnotationController controller;
+  final void Function(DrawingMode) setMode;
+  final void Function() clear;
+  final void Function() fitToScreen;
+  final void Function() invertColor;
+  final void Function() rotation;
+
+  const DrawingControls({
+    Key? key,
+    required this.controller,
+    required this.setMode,
+    required this.clear,
+    required this.fitToScreen,
+    required this.invertColor,
+    required this.rotation,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Wrap(
+          children: [
+            Text(controller.position),
+            CheckboxListTile(
+              title: const Text("Show Points"),
+              value: controller.showPoint,
+              onChanged: (bool? value) {
+                controller.showPoint = value!;
+              },
+            ),
+            CheckboxListTile(
+              title: const Text("Show Lines"),
+              value: controller.showLine,
+              onChanged: (bool? value) {
+                controller.showLine = value!;
+              },
+            ),
+            CheckboxListTile(
+              title: const Text("Show Rectangles"),
+              value: controller.showRect,
+              onChanged: (bool? value) {
+                controller.showRect = value!;
+              },
+            ),
+            CheckboxListTile(
+              title: const Text("Show Text"),
+              value: controller.showText,
+              onChanged: (bool? value) {
+                controller.showText = value!;
+              },
+            ),
+          ],
+        ),
+        ButtonBar(
+          alignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+                onPressed: () => setMode(DrawingMode.point),
+                child: const Text('Add Point')),
+            ElevatedButton(
+                onPressed: () => setMode(DrawingMode.line),
+                child: const Text('Add Line')),
+            ElevatedButton(
+                onPressed: () => setMode(DrawingMode.rectangle),
+                child: const Text('Add Rectangle')),
+            ElevatedButton(
+                onPressed: () => setMode(DrawingMode.text),
+                child: const Text('Add Text')),
+            ElevatedButton(onPressed: clear, child: const Text('Clear')),
+            ElevatedButton(
+                onPressed: () => setMode(DrawingMode.pan),
+                child: const Text('Pan')),
+            ElevatedButton(
+                onPressed: () => setMode(DrawingMode.magnify),
+                child: const Text('Magnify')),
+            ElevatedButton(onPressed: fitToScreen, child: const Text('Fit')),
+            ElevatedButton(onPressed: invertColor, child: const Text('Invert')),
+            ElevatedButton(onPressed: rotation, child: const Text('Rotation')),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -725,41 +780,5 @@ class AnnotationPainter extends CustomPainter {
         oldDelegate.controller.imageOffset != controller.imageOffset ||
         oldDelegate.scale != scale ||
         oldDelegate.controller.annotations != controller.annotations;
-  }
-}
-
-class ZoomPainter extends CustomPainter {
-  final ui.Image? image;
-  final double scale;
-  final Offset imageOffset;
-  final Offset hoverPosition;
-
-  ZoomPainter({
-    required this.image,
-    required this.scale,
-    required this.imageOffset,
-    required this.hoverPosition,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (image != null) {
-      final zoomScale = scale * 2.0;
-      final src = Rect.fromLTWH(
-        (hoverPosition.dx - imageOffset.dx) / scale -
-            size.width / (2 * zoomScale),
-        (hoverPosition.dy - imageOffset.dy) / scale -
-            size.height / (2 * zoomScale),
-        size.width / zoomScale,
-        size.height / zoomScale,
-      );
-      final dst = Rect.fromLTWH(0, 0, size.width, size.height);
-      canvas.drawImageRect(image!, src, dst, Paint());
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
   }
 }
