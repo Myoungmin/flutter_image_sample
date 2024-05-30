@@ -391,20 +391,6 @@ class DrawingPageState extends State<DrawingPage> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: 150,
-                    height: 150,
-                    child: annotationImage != null
-                        ? CustomPaint(
-                            painter: ZoomPainter(
-                              image: annotationImage,
-                              scale: scale,
-                              imageOffset: controller.imageOffset,
-                              hoverPosition: hoverPosition,
-                            ),
-                          )
-                        : Container(),
-                  ),
                 ],
               ),
             ),
