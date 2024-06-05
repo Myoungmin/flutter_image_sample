@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-enum DrawingMode { point, line, rectangle, text, pan, magnify }
+enum DrawingMode { point, line, rectangle, pan, magnify }
 
 class DrawingPage extends StatefulWidget {
   final ImageProvider imageProvider;
@@ -19,12 +19,6 @@ class DrawingPage extends StatefulWidget {
 class DrawingPageState extends State<DrawingPage> {
   final AnnotationController controller = AnnotationController();
   ui.Image? image;
-  ui.Image? annotationImage;
-  Offset lastPanPosition = Offset.zero;
-  Offset dragStart = Offset.zero;
-  double scale = 1.0;
-  Offset hoverPosition = Offset.zero;
-  bool isDragging = false;
   late ImageStreamListener _imageStreamListener;
 
   @override
@@ -37,13 +31,6 @@ class DrawingPageState extends State<DrawingPage> {
   void setImageState(ui.Image newImage) {
     setState(() {
       image = newImage;
-      annotationImage = newImage;
-    });
-  }
-
-  void setControllerState(double newScale, Offset newOffset) {
-    setState(() {
-      scale = newScale;
     });
   }
 
@@ -86,8 +73,6 @@ class DrawingPageState extends State<DrawingPage> {
             child: DrawingCanvas(
               controller: controller,
               image: image,
-              scale: scale,
-              isDragging: isDragging,
               onPanStart: (DragStartDetails details) {},
               onPanUpdate: (DragUpdateDetails details) {},
               onPanEnd: (DragEndDetails details) {},
@@ -105,8 +90,6 @@ class DrawingPageState extends State<DrawingPage> {
 class DrawingCanvas extends StatelessWidget {
   final AnnotationController controller;
   final ui.Image? image;
-  final double scale;
-  final bool isDragging;
   final void Function(DragStartDetails) onPanStart;
   final void Function(DragUpdateDetails) onPanUpdate;
   final void Function(DragEndDetails) onPanEnd;
@@ -118,8 +101,6 @@ class DrawingCanvas extends StatelessWidget {
     Key? key,
     required this.controller,
     this.image,
-    required this.scale,
-    required this.isDragging,
     required this.onPanStart,
     required this.onPanUpdate,
     required this.onPanEnd,
