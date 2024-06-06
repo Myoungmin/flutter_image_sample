@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
@@ -52,16 +51,6 @@ class DrawingPageState extends State<DrawingPage> {
         .resolve(const ImageConfiguration())
         .removeListener(_imageStreamListener);
     super.dispose();
-  }
-
-  Future<ui.Image> createImageFromBytes(
-      int width, int height, Uint8List data) async {
-    final Completer<ui.Image> completer = Completer();
-    ui.decodeImageFromPixels(data, width, height, ui.PixelFormat.rgba8888,
-        (ui.Image img) {
-      completer.complete(img);
-    });
-    return completer.future;
   }
 
   @override
