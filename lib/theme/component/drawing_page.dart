@@ -1,66 +1,25 @@
-import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum DrawingMode { point, line, rectangle, pan, magnify }
+enum DrawingMode { none, point, line, rectangle, pan, magnify }
 
-class DrawingPage extends StatefulWidget {
+class DrawingPage extends ConsumerWidget {
   final ImageProvider imageProvider;
 
   const DrawingPage({Key? key, required this.imageProvider}) : super(key: key);
 
   @override
-  DrawingPageState createState() => DrawingPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.read(imageLoaderProvider.notifier).loadImage(imageProvider);
 
-class DrawingPageState extends State<DrawingPage> {
-  ui.Image? image;
-  late ImageStreamListener _imageStreamListener;
-
-  @override
-  void initState() {
-    super.initState();
-    _imageStreamListener = ImageStreamListener(onImageLoaded);
-    addImageListener();
-  }
-
-  void setImageState(ui.Image newImage) {
-    setState(() {
-      image = newImage;
-    });
-  }
-
-  void onImageLoaded(ImageInfo info, bool _) {
-    setState(() {
-      setImageState(info.image);
-    });
-  }
-
-  Future<void> addImageListener() async {
-    widget.imageProvider
-        .resolve(const ImageConfiguration())
-        .addListener(_imageStreamListener);
-  }
-
-  @override
-  void dispose() {
-    widget.imageProvider
-        .resolve(const ImageConfiguration())
-        .removeListener(_imageStreamListener);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
           Expanded(
-            child: DrawingCanvas(
-              image: image,
+            child: GestureView(
               onPanStart: (DragStartDetails details) {},
               onPanUpdate: (DragUpdateDetails details) {},
               onPanEnd: (DragEndDetails details) {},
@@ -75,8 +34,7 @@ class DrawingPageState extends State<DrawingPage> {
   }
 }
 
-class DrawingCanvas extends ConsumerWidget {
-  final ui.Image? image;
+class GestureView extends ConsumerWidget {
   final void Function(DragStartDetails) onPanStart;
   final void Function(DragUpdateDetails) onPanUpdate;
   final void Function(DragEndDetails) onPanEnd;
@@ -84,9 +42,8 @@ class DrawingCanvas extends ConsumerWidget {
   final void Function(PointerSignalEvent) onPointerSignal;
   final void Function(PointerEvent) onHover;
 
-  const DrawingCanvas({
+  const GestureView({
     Key? key,
-    this.image,
     required this.onPanStart,
     required this.onPanUpdate,
     required this.onPanEnd,
@@ -98,6 +55,7 @@ class DrawingCanvas extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final List<Annotation> annotations = ref.watch(annotationListProvider);
+    final ui.Image? image = ref.watch(imageLoaderProvider);
 
     return Listener(
       onPointerSignal: onPointerSignal,
@@ -269,6 +227,9 @@ class AnnotationPainter extends CustomPainter {
   }
 }
 
+final annotationListProvider =
+    NotifierProvider<AnnotationList, List<Annotation>>(AnnotationList.new);
+
 class AnnotationList extends Notifier<List<Annotation>> {
   @override
   List<Annotation> build() => [];
@@ -290,5 +251,27 @@ class AnnotationList extends Notifier<List<Annotation>> {
   }
 }
 
-final annotationListProvider =
-    NotifierProvider<AnnotationList, List<Annotation>>(AnnotationList.new);
+final imageLoaderProvider =
+    NotifierProvider<ImageLoader, ui.Image?>(ImageLoader.new);
+
+class ImageLoader extends Notifier<ui.Image?> {
+  @override
+  ui.Image? build() => null;
+
+  void loadImage(ImageProvider imageProvider) {
+    final ImageStreamListener listener =
+        ImageStreamListener((ImageInfo info, bool _) {
+      state = info.image;
+    });
+    imageProvider.resolve(const ImageConfiguration()).addListener(listener);
+  }
+}
+
+final drawingModeProvider =
+    NotifierProvider<DrawingModeController, DrawingMode>(
+        DrawingModeController.new);
+
+class DrawingModeController extends Notifier<DrawingMode> {
+  @override
+  DrawingMode build() => DrawingMode.none;
+}
