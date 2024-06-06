@@ -17,7 +17,6 @@ class DrawingPage extends StatefulWidget {
 }
 
 class DrawingPageState extends State<DrawingPage> {
-  final AnnotationController controller = AnnotationController();
   ui.Image? image;
   late ImageStreamListener _imageStreamListener;
 
@@ -61,7 +60,6 @@ class DrawingPageState extends State<DrawingPage> {
         children: [
           Expanded(
             child: DrawingCanvas(
-              controller: controller,
               image: image,
               onPanStart: (DragStartDetails details) {},
               onPanUpdate: (DragUpdateDetails details) {},
@@ -77,8 +75,7 @@ class DrawingPageState extends State<DrawingPage> {
   }
 }
 
-class DrawingCanvas extends StatelessWidget {
-  final AnnotationController controller;
+class DrawingCanvas extends ConsumerWidget {
   final ui.Image? image;
   final void Function(DragStartDetails) onPanStart;
   final void Function(DragUpdateDetails) onPanUpdate;
@@ -89,7 +86,6 @@ class DrawingCanvas extends StatelessWidget {
 
   const DrawingCanvas({
     Key? key,
-    required this.controller,
     this.image,
     required this.onPanStart,
     required this.onPanUpdate,
@@ -100,7 +96,9 @@ class DrawingCanvas extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final List<Annotation> annotations = ref.watch(annotationListProvider);
+
     return Listener(
       onPointerSignal: onPointerSignal,
       child: MouseRegion(
@@ -115,7 +113,7 @@ class DrawingCanvas extends StatelessWidget {
             alignment: Alignment.center,
             child: CustomPaint(
               painter: AnnotationPainter(
-                controller: controller,
+                annotations: annotations,
                 image: image,
               ),
               child: const Center(),
@@ -233,23 +231,12 @@ class RectAnnotation extends Annotation {
   }
 }
 
-class AnnotationController {
-  List<Annotation> annotations = [];
-
-  void addAnnotation(Annotation annotation) => annotations.add(annotation);
-  void removeAnnotationAtPosition(Offset position) {
-    annotations.removeWhere((annotation) => annotation.contains(position));
-  }
-
-  void clear() => annotations.clear();
-}
-
 class AnnotationPainter extends CustomPainter {
-  final AnnotationController controller;
+  final List<Annotation> annotations;
   final ui.Image? image;
 
   AnnotationPainter({
-    required this.controller,
+    required this.annotations,
     this.image,
   });
 
@@ -271,15 +258,14 @@ class AnnotationPainter extends CustomPainter {
       );
     }
 
-    for (var element in controller.annotations) {
+    for (var element in annotations) {
       element.draw(canvas);
     }
   }
 
   @override
   bool shouldRepaint(covariant AnnotationPainter oldDelegate) {
-    return oldDelegate.image != image ||
-        oldDelegate.controller.annotations != controller.annotations;
+    return oldDelegate.image != image || oldDelegate.annotations != annotations;
   }
 }
 
