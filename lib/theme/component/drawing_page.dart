@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum DrawingMode { point, line, rectangle, pan, magnify }
 
@@ -281,3 +282,27 @@ class AnnotationPainter extends CustomPainter {
         oldDelegate.controller.annotations != controller.annotations;
   }
 }
+
+class AnnotationList extends Notifier<List<Annotation>> {
+  @override
+  List<Annotation> build() => [];
+
+  void add(Annotation annotation) {
+    state = [
+      ...state,
+      annotation,
+    ];
+  }
+
+  void removeAnnotationAtPosition(Offset position) {
+    state =
+        state.where((annotation) => !annotation.contains(position)).toList();
+  }
+
+  void clear() {
+    state = [];
+  }
+}
+
+final annotationListProvider =
+    NotifierProvider<AnnotationList, List<Annotation>>(AnnotationList.new);
