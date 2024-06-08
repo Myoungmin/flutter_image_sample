@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/annotation.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/annotation_painter.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/image_loader.dart';
+import 'package:flutter_image_sample/theme/component/drawing_page/image_matrix_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GestureView extends ConsumerWidget {
@@ -29,6 +30,7 @@ class GestureView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final List<Annotation> annotations = ref.watch(annotationListProvider);
     final ui.Image? image = ref.watch(imageLoaderProvider);
+    final Matrix4 imageMatrix = ref.watch(imageMatrixProvider);
 
     return Listener(
       onPointerSignal: onPointerSignal,
@@ -40,7 +42,7 @@ class GestureView extends ConsumerWidget {
           onPanEnd: onPanEnd,
           onSecondaryTapDown: onSecondaryTapDown,
           child: Transform(
-            transform: Matrix4.identity()..rotateZ(0 * 3.1415927 / 180),
+            transform: imageMatrix,
             alignment: Alignment.center,
             child: CustomPaint(
               painter: AnnotationPainter(
