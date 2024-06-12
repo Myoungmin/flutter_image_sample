@@ -16,8 +16,8 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
 
   void translateByOffset(Offset offset) {
     final currentMatrix = state.clone();
-    final translation = Matrix4.identity()..translate(offset.dx, offset.dy);
-    state = currentMatrix.multiplied(translation);
+    currentMatrix.setTranslationRaw(0, 0, 0);
+    state = currentMatrix..translate(offset.dx, offset.dy);
   }
 
   void scaleByFactor(double scaleFactor) {

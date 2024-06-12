@@ -9,8 +9,8 @@ final gestureControllerProvider =
 
 class GestureControllerNotifier extends Notifier<GestureController> {
   @override
-  GestureController build() =>
-      GestureController(imageMatrixNotifier: ref.watch(imageMatrixProvider.notifier));
+  GestureController build() => GestureController(
+      imageMatrixNotifier: ref.watch(imageMatrixProvider.notifier));
 }
 
 class GestureController {
@@ -42,6 +42,7 @@ class GestureController {
     if (drawingMode == DrawingMode.pan) {
       Offset delta = details.localPosition - dragStart;
       imageOffset = lastPanPosition + delta;
+      imageMatrixNotifier.translateByOffset(imageOffset);
     } else {
       endingPoint = toImagePosition(details.localPosition);
     }
