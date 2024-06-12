@@ -10,19 +10,27 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
 
   void rotate90Degrees() {
     final currentMatrix = state.clone();
-    final rotation = Matrix4.identity()..rotateZ(90 * 3.1415927 / 180);
-    state = currentMatrix.multiplied(rotation);
+
+    state = currentMatrix..rotateZ(90 * 3.1415927 / 180);
   }
 
   void translateByOffset(Offset offset) {
     final currentMatrix = state.clone();
+
+    // translation 부분만 초기화
     currentMatrix.setTranslationRaw(0, 0, 0);
+
     state = currentMatrix..translate(offset.dx, offset.dy);
   }
 
   void scaleByFactor(double scaleFactor) {
     final currentMatrix = state.clone();
-    final scaling = Matrix4.identity()..scale(scaleFactor, scaleFactor);
-    state = currentMatrix.multiplied(scaling);
+
+    // scale 부분만 초기화
+    currentMatrix.setEntry(0, 0, 1.0);
+    currentMatrix.setEntry(1, 1, 1.0);
+    currentMatrix.setEntry(2, 2, 1.0);
+
+    state = currentMatrix..scale(scaleFactor, scaleFactor);
   }
 }
