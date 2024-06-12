@@ -1,5 +1,5 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_sample/theme/component/drawing_page/gesture_controller.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/gesture_view.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/image_loader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,14 +14,15 @@ class DrawingPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.read(imageLoaderProvider.notifier).loadImage(imageProvider);
+    GestureController gestureController = ref.read(gestureControllerProvider);
 
     return GestureView(
-      onPanStart: (DragStartDetails details) {},
-      onPanUpdate: (DragUpdateDetails details) {},
-      onPanEnd: (DragEndDetails details) {},
-      onSecondaryTapDown: (TapDownDetails details) {},
-      onPointerSignal: (PointerSignalEvent details) {},
-      onHover: (PointerEvent details) {},
+      onPanStart: gestureController.onPanStart,
+      onPanUpdate: gestureController.onPanUpdate,
+      onPanEnd: gestureController.onPanEnd,
+      onSecondaryTapDown: gestureController.onSecondaryTapDown,
+      onPointerSignal: gestureController.onPointerSignal,
+      onHover: gestureController.onHover,
     );
   }
 }
