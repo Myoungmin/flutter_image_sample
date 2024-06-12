@@ -15,21 +15,13 @@ class DrawingPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.read(imageLoaderProvider.notifier).loadImage(imageProvider);
 
-    return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: GestureView(
-              onPanStart: (DragStartDetails details) {},
-              onPanUpdate: (DragUpdateDetails details) {},
-              onPanEnd: (DragEndDetails details) {},
-              onSecondaryTapDown: (TapDownDetails details) {},
-              onPointerSignal: (PointerSignalEvent details) {},
-              onHover: (PointerEvent details) {},
-            ),
-          ),
-        ],
-      ),
+    return GestureView(
+      onPanStart: (DragStartDetails details) {},
+      onPanUpdate: (DragUpdateDetails details) {},
+      onPanEnd: (DragEndDetails details) {},
+      onSecondaryTapDown: (TapDownDetails details) {},
+      onPointerSignal: (PointerSignalEvent details) {},
+      onHover: (PointerEvent details) {},
     );
   }
 }
