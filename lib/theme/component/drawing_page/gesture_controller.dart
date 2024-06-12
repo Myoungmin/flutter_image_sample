@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/drawing_page.dart';
+import 'package:flutter_image_sample/theme/component/drawing_page/image_matrix_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final gestureControllerProvider =
@@ -8,7 +9,8 @@ final gestureControllerProvider =
 
 class GestureControllerNotifier extends Notifier<GestureController> {
   @override
-  GestureController build() => GestureController();
+  GestureController build() =>
+      GestureController(imageMatrixNotifier: ref.watch(imageMatrixProvider.notifier));
 }
 
 class GestureController {
@@ -21,6 +23,9 @@ class GestureController {
   double scale = 1.0;
   Offset hoverPosition = Offset.zero;
   bool isDragging = false;
+  ImageMatrixNotifier imageMatrixNotifier;
+
+  GestureController({required this.imageMatrixNotifier});
 
   void onPanStart(DragStartDetails details) {
     if (drawingMode == DrawingMode.pan) {
