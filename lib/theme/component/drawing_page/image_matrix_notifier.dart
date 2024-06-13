@@ -14,6 +14,23 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
     state = currentMatrix..rotateZ(90 * 3.1415927 / 180);
   }
 
+  void rotateByDirection(Direction direction) {
+    final currentMatrix = state.clone();
+
+    // rotate 부분을 초기화
+    currentMatrix.setEntry(0, 0, 1.0);
+    currentMatrix.setEntry(0, 1, 0.0);
+    currentMatrix.setEntry(0, 2, 0.0);
+    currentMatrix.setEntry(1, 0, 0.0);
+    currentMatrix.setEntry(1, 1, 1.0);
+    currentMatrix.setEntry(1, 2, 0.0);
+    currentMatrix.setEntry(2, 0, 0.0);
+    currentMatrix.setEntry(2, 1, 0.0);
+    currentMatrix.setEntry(2, 2, 1.0);
+
+    state = currentMatrix..rotateZ(direction.getAngle() * 3.1415927 / 180);
+  }
+
   void translateByOffset(Offset offset) {
     final currentMatrix = state.clone();
 
@@ -33,4 +50,23 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
 
     state = currentMatrix..scale(scaleFactor, scaleFactor);
   }
+
+  void setMatrix(double scaleFactor, Direction direction, Offset offset) {
+    state = Matrix4.identity()
+      ..scale(scaleFactor, scaleFactor)
+      ..rotateZ(direction.getAngle() * 3.1415927 / 180)
+      ..translate(offset.dx, offset.dy);
+  }
+}
+
+enum Direction {
+  none(0),
+  cw90(90),
+  cw180(180),
+  cw270(270);
+
+  final int angle;
+  const Direction(this.angle);
+
+  int getAngle() => angle;
 }
