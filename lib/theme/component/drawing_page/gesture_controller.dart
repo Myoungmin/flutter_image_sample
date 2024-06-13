@@ -81,11 +81,11 @@ class GestureController {
 
     // focalPoint에서 이미지의 현재 오프셋을 뺀 후, 현재 스케일로 나누어 포컬 포인트가 이미지 내에서 차지하는 상대적인 위치를 계산
     final Offset focalPointInImage = (focalPoint - imageOffsetBefore) / scale;
-    scale = newScale;
 
     // 새로운 스케일을 적용한 후, 포컬 포인트를 기준으로 이미지의 새로운 오프셋을 계산
     // 이 계산을 통해 포컬 포인트가 확대/축소 후에도 동일한 화면 위치에 유지
-    imageOffset = focalPoint - focalPointInImage * scale;
+    imageOffset = focalPoint - focalPointInImage * newScale;
+    scale = newScale;
   }
 
   Offset toImagePosition(Offset localPosition) {
