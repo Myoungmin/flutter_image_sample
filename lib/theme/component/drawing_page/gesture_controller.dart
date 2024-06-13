@@ -15,12 +15,13 @@ class GestureControllerNotifier extends Notifier<GestureController> {
 
 class GestureController {
   DrawingMode drawingMode = DrawingMode.none;
+  Offset imageOffset = Offset.zero;
+  double scale = 1.0;
+  Direction direction = Direction.none;
   Offset startingPoint = Offset.zero;
   Offset endingPoint = Offset.zero;
-  Offset imageOffset = Offset.zero;
   Offset lastPanPosition = Offset.zero;
   Offset dragStart = Offset.zero;
-  double scale = 1.0;
   Offset hoverPosition = Offset.zero;
   bool isDragging = false;
   ImageMatrixNotifier imageMatrixNotifier;

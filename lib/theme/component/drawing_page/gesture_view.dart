@@ -43,7 +43,7 @@ class GestureView extends ConsumerWidget {
           onSecondaryTapDown: onSecondaryTapDown,
           child: Transform(
             transform: imageMatrix,
-            alignment: Alignment.center,
+            alignment: Alignment.topLeft,
             child: CustomPaint(
               painter: AnnotationPainter(
                 annotations: annotations,

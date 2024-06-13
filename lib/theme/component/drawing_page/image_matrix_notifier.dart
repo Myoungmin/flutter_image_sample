@@ -57,6 +57,17 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
       ..rotateZ(direction.getAngle() * 3.1415927 / 180)
       ..translate(offset.dx, offset.dy);
   }
+
+  void setScaleByFocalPoint(double scale, Offset focalPoint) {
+    final Matrix4 currentMatrix = state.clone();
+
+    currentMatrix
+      ..translate(focalPoint.dx, focalPoint.dy)
+      ..scale(scale)
+      ..translate(-focalPoint.dx, -focalPoint.dy);
+
+    state = currentMatrix;
+  }
 }
 
 enum Direction {
