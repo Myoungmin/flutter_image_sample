@@ -64,6 +64,8 @@ class GestureController {
       double scaleFactor = event.scrollDelta.dy > 0 ? 0.9 : 1.1;
       Offset focalPoint = event.localPosition;
       scaleImage(focalPoint, scaleFactor);
+
+      imageMatrixNotifier.setScaleByFocalPoint(scale, focalPoint);
     }
   }
 
