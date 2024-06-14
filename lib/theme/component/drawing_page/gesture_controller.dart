@@ -70,9 +70,17 @@ class GestureController {
     if (event is PointerScrollEvent) {
       double scaleFactor = event.scrollDelta.dy > 0 ? 0.9 : 1.1;
       Offset focalPoint = event.localPosition;
-      scaleImage(focalPoint, scaleFactor);
 
-      imageMatrixNotifier.setScaleByFocalPoint(scale, focalPoint);
+      final RenderBox renderBox =
+          globalKey.currentContext?.findRenderObject() as RenderBox;
+      final Offset imageCenter = renderBox.size.center(Offset.zero);
+      final Offset focalPointInImage = focalPoint - imageCenter;
+
+      final double newScale = scale * scaleFactor;
+      if (newScale == scale) return;
+      scale = newScale;
+
+      imageMatrixNotifier.setScaleByFocalPoint(scale, focalPointInImage);
     }
   }
 

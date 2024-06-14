@@ -59,14 +59,10 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
   }
 
   void setScaleByFocalPoint(double scale, Offset focalPoint) {
-    final Matrix4 currentMatrix = state.clone();
-
-    currentMatrix
+    state = Matrix4.identity()
       ..translate(focalPoint.dx, focalPoint.dy)
       ..scale(scale)
       ..translate(-focalPoint.dx, -focalPoint.dy);
-
-    state = currentMatrix;
   }
 }
 
