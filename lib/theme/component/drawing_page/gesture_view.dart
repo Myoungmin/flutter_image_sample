@@ -32,6 +32,13 @@ class GestureView extends ConsumerWidget {
     final ui.Image? image = ref.watch(imageLoaderProvider);
     final Matrix4 imageMatrix = ref.watch(imageMatrixProvider);
 
+    if (image == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final double imageWidth = image.width.toDouble();
+    final double imageHeight = image.height.toDouble();
+
     return Listener(
       onPointerSignal: onPointerSignal,
       child: MouseRegion(
@@ -49,7 +56,10 @@ class GestureView extends ConsumerWidget {
                 annotations: annotations,
                 image: image,
               ),
-              child: const Center(),
+              child: SizedBox(
+                width: imageWidth,
+                height: imageHeight,
+              ),
             ),
           ),
         ),
