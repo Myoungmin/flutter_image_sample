@@ -15,12 +15,8 @@ class AnnotationPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (image != null) {
-      Rect imageRect = Rect.fromLTWH(
-        0,
-        0,
-        image!.width.toDouble(),
-        image!.height.toDouble(),
-      );
+      Rect imageRect = Offset.zero & size;
+
       paintImage(
         canvas: canvas,
         rect: imageRect,
