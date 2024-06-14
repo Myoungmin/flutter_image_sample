@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/drawing_page.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/image_matrix_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,12 +9,15 @@ final gestureControllerProvider =
         GestureControllerNotifier.new);
 
 class GestureControllerNotifier extends Notifier<GestureController> {
+  final GlobalKey globalKey = GlobalKey();
   @override
   GestureController build() => GestureController(
-      imageMatrixNotifier: ref.watch(imageMatrixProvider.notifier));
+      imageMatrixNotifier: ref.watch(imageMatrixProvider.notifier),
+      globalKey: globalKey);
 }
 
 class GestureController {
+  GlobalKey globalKey;
   DrawingMode drawingMode = DrawingMode.none;
   Offset imageOffset = Offset.zero;
   double scale = 1.0;
@@ -26,7 +30,10 @@ class GestureController {
   bool isDragging = false;
   ImageMatrixNotifier imageMatrixNotifier;
 
-  GestureController({required this.imageMatrixNotifier});
+  GestureController({
+    required this.globalKey,
+    required this.imageMatrixNotifier,
+  });
 
   void onPanStart(DragStartDetails details) {
     if (drawingMode == DrawingMode.pan) {
@@ -71,6 +78,11 @@ class GestureController {
 
   void onHover(PointerEvent event) {
     hoverPosition = event.localPosition;
+    final RenderBox renderBox =
+        globalKey.currentContext?.findRenderObject() as RenderBox;
+    final Offset imageCenter = renderBox.size.center(Offset.zero);
+    final Offset focalPointInImage = hoverPosition - imageCenter;
+    print(focalPointInImage);
   }
 
   void scaleImage(Offset focalPoint, double scaleFactor) {

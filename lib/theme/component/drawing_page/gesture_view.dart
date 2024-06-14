@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/annotation.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/annotation_painter.dart';
+import 'package:flutter_image_sample/theme/component/drawing_page/gesture_controller.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/image_loader.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/image_matrix_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,6 +53,7 @@ class GestureView extends ConsumerWidget {
             transform: imageMatrix,
             alignment: Alignment.center,
             child: CustomPaint(
+              key: ref.watch(gestureControllerProvider).globalKey,
               painter: AnnotationPainter(
                 annotations: annotations,
                 image: image,
