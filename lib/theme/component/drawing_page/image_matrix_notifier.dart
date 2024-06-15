@@ -64,6 +64,10 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
       ..scale(scale)
       ..translate(-focalPoint.dx, -focalPoint.dy);
   }
+
+  void setAlignByFocalPoint(Offset focalPoint) {
+    state = Matrix4.identity()..translate(focalPoint.dx, focalPoint.dy);
+  }
 }
 
 enum Direction {
