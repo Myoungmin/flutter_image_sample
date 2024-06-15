@@ -51,22 +51,11 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
     state = currentMatrix..scale(scaleFactor, scaleFactor);
   }
 
-  void setMatrix(double scaleFactor, Direction direction, Offset offset) {
+  void setMatrix(Offset offset, Direction direction, double scale) {
     state = Matrix4.identity()
-      ..scale(scaleFactor, scaleFactor)
+      ..translate(offset.dx, offset.dy)
       ..rotateZ(direction.getAngle() * 3.1415927 / 180)
-      ..translate(offset.dx, offset.dy);
-  }
-
-  void setScaleByFocalPoint(double scale, Offset focalPoint) {
-    state = Matrix4.identity()
-      ..translate(focalPoint.dx, focalPoint.dy)
-      ..scale(scale)
-      ..translate(-focalPoint.dx, -focalPoint.dy);
-  }
-
-  void setAlignByFocalPoint(Offset focalPoint) {
-    state = Matrix4.identity()..translate(focalPoint.dx, focalPoint.dy);
+      ..scale(scale);
   }
 }
 

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_sample/theme/component/drawing_page/drawing_page.dart';
@@ -71,26 +73,15 @@ class GestureController {
       double scaleFactor = event.scrollDelta.dy > 0 ? 0.9 : 1.1;
       Offset focalPoint = event.localPosition;
 
-      final RenderBox renderBox =
-          globalKey.currentContext?.findRenderObject() as RenderBox;
-      final Offset imageCenter = renderBox.size.center(Offset.zero);
-      final Offset focalPointInImage = focalPoint - imageCenter;
+      scaleImage(focalPoint, scaleFactor);
 
-      final double newScale = scale * scaleFactor;
-      if (newScale == scale) return;
-      scale = newScale;
-
-      imageMatrixNotifier.setScaleByFocalPoint(scale, focalPointInImage);
+      imageMatrixNotifier.setMatrix(imageOffset, direction, scale);
     }
   }
 
   void onHover(PointerEvent event) {
     hoverPosition = event.localPosition;
-    final RenderBox renderBox =
-        globalKey.currentContext?.findRenderObject() as RenderBox;
-    final Offset imageCenter = renderBox.size.center(Offset.zero);
-    final Offset focalPointInImage = hoverPosition - imageCenter;
-    print(focalPointInImage);
+    log("$hoverPosition");
   }
 
   void scaleImage(Offset focalPoint, double scaleFactor) {

@@ -51,7 +51,7 @@ class GestureView extends ConsumerWidget {
           onSecondaryTapDown: onSecondaryTapDown,
           child: Transform(
             transform: imageMatrix,
-            alignment: Alignment.center,
+            alignment: Alignment.topLeft,
             child: CustomPaint(
               key: ref.watch(gestureControllerProvider).globalKey,
               painter: AnnotationPainter(
