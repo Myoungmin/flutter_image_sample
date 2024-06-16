@@ -8,57 +8,14 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
   @override
   Matrix4 build() => Matrix4.identity();
 
-  void rotate90Degrees() {
-    final currentMatrix = state.clone();
-
-    state = currentMatrix..rotateZ(90 * 3.1415927 / 180);
-  }
-
-  void rotateByDirection(Direction direction) {
-    final currentMatrix = state.clone();
-
-    // rotate 부분을 초기화
-    currentMatrix.setEntry(0, 0, 1.0);
-    currentMatrix.setEntry(0, 1, 0.0);
-    currentMatrix.setEntry(0, 2, 0.0);
-    currentMatrix.setEntry(1, 0, 0.0);
-    currentMatrix.setEntry(1, 1, 1.0);
-    currentMatrix.setEntry(1, 2, 0.0);
-    currentMatrix.setEntry(2, 0, 0.0);
-    currentMatrix.setEntry(2, 1, 0.0);
-    currentMatrix.setEntry(2, 2, 1.0);
-
-    state = currentMatrix..rotateZ(direction.getAngle() * 3.1415927 / 180);
-  }
-
-  void translateByOffset(Offset offset) {
-    final currentMatrix = state.clone();
-
-    // translation 부분만 초기화
-    currentMatrix.setTranslationRaw(0, 0, 0);
-
-    state = currentMatrix..translate(offset.dx, offset.dy);
-  }
-
-  void scaleByFactor(double scaleFactor) {
-    final currentMatrix = state.clone();
-
-    // scale 부분만 초기화
-    currentMatrix.setEntry(0, 0, 1.0);
-    currentMatrix.setEntry(1, 1, 1.0);
-    currentMatrix.setEntry(2, 2, 1.0);
-
-    state = currentMatrix..scale(scaleFactor, scaleFactor);
-  }
-
   void setMatrix(
-      Offset offset, Direction direction, double scale, Offset imageCenter) {
+      Offset offset, Direction direction, double scale, Offset renderBoxCenter) {
     state = Matrix4.identity()
       ..translate(offset.dx, offset.dy)
       ..scale(scale)
-      ..translate(imageCenter.dx, imageCenter.dy)
+      ..translate(renderBoxCenter.dx, renderBoxCenter.dy)
       ..rotateZ(direction.getAngle() * 3.1415927 / 180)
-      ..translate(-imageCenter.dx, -imageCenter.dy);
+      ..translate(-renderBoxCenter.dx, -renderBoxCenter.dy);
   }
 }
 

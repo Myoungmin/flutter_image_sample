@@ -52,7 +52,8 @@ class GestureController {
     if (drawingMode == DrawingMode.pan) {
       Offset delta = details.localPosition - dragStart;
       imageOffset = lastPanPosition + delta;
-      imageMatrixNotifier.translateByOffset(imageOffset);
+      imageMatrixNotifier.setMatrix(
+          imageOffset, direction, scale, getRendrBoxCenter());
     } else {
       endingPoint = toImagePosition(details.localPosition);
     }
@@ -75,11 +76,8 @@ class GestureController {
 
       scaleImage(focalPoint, scaleFactor);
 
-      final RenderBox renderBox =
-          globalKey.currentContext?.findRenderObject() as RenderBox;
-      final Offset imageCenter = renderBox.size.center(Offset.zero);
-
-      imageMatrixNotifier.setMatrix(imageOffset, direction, scale, imageCenter);
+      imageMatrixNotifier.setMatrix(
+          imageOffset, direction, scale, getRendrBoxCenter());
     }
   }
 
@@ -111,5 +109,11 @@ class GestureController {
     // imageOffset은 이미지가 화면 내에서 어디에 위치해 있는지를 나타낸다
     // 이를 통해 입력 위치를 이미지의 좌상단을 기준으로 한 좌표계로 변환
     return (localPosition - imageOffset) / scale;
+  }
+
+  Offset getRendrBoxCenter() {
+    final RenderBox renderBox =
+        globalKey.currentContext?.findRenderObject() as RenderBox;
+    return renderBox.size.center(Offset.zero);
   }
 }
