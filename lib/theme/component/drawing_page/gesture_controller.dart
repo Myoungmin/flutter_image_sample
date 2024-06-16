@@ -75,7 +75,11 @@ class GestureController {
 
       scaleImage(focalPoint, scaleFactor);
 
-      imageMatrixNotifier.setMatrix(imageOffset, direction, scale);
+      final RenderBox renderBox =
+          globalKey.currentContext?.findRenderObject() as RenderBox;
+      final Offset imageCenter = renderBox.size.center(Offset.zero);
+
+      imageMatrixNotifier.setMatrix(imageOffset, direction, scale, imageCenter);
     }
   }
 

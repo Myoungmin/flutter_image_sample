@@ -51,11 +51,14 @@ class ImageMatrixNotifier extends Notifier<Matrix4> {
     state = currentMatrix..scale(scaleFactor, scaleFactor);
   }
 
-  void setMatrix(Offset offset, Direction direction, double scale) {
+  void setMatrix(
+      Offset offset, Direction direction, double scale, Offset imageCenter) {
     state = Matrix4.identity()
       ..translate(offset.dx, offset.dy)
+      ..scale(scale)
+      ..translate(imageCenter.dx, imageCenter.dy)
       ..rotateZ(direction.getAngle() * 3.1415927 / 180)
-      ..scale(scale);
+      ..translate(-imageCenter.dx, -imageCenter.dy);
   }
 }
 
